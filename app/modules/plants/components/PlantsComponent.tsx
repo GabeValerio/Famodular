@@ -21,6 +21,55 @@ import { Textarea } from '@/app/components/ui/textarea';
 import { Card } from '@/app/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 
+const compressImage = async (file: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error('Canvas is empty'));
+            return;
+          }
+          const compressedFile = new File([blob], file.name, {
+            type: 'image/jpeg',
+            lastModified: Date.now(),
+          });
+          resolve(compressedFile);
+        }, 'image/jpeg', 0.8);
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 interface PlantsComponentProps {
   plants: Plant[];
   loading: boolean;
@@ -148,9 +197,24 @@ export function PlantsComponent({
 
   const handleImageUpload = async (file: File) => {
     try {
+      // Compress image before upload
+      let fileToUpload = file;
+      if (file.size > 1 * 1024 * 1024) { // If larger than 1MB
+        try {
+          fileToUpload = await compressImage(file);
+        } catch (compressError) {
+          console.warn('Image compression failed, trying original file:', compressError);
+        }
+      }
+
+      // Check file size again after compression
+      if (fileToUpload.size > 4.5 * 1024 * 1024) { // 4.5MB safe limit for serverless
+        throw new Error('Image is too large. Please choose a smaller image (under 5MB).');
+      }
+
       // Convert file to base64 for AI analysis
       const reader = new FileReader();
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(fileToUpload);
       
       await new Promise<void>((resolve, reject) => {
         reader.onload = () => resolve();
@@ -161,7 +225,7 @@ export function PlantsComponent({
 
       // Upload image to Cloudinary first
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('folder', 'plant-photos');
 
       const uploadResponse = await fetch('/api/upload', {
@@ -170,7 +234,8 @@ export function PlantsComponent({
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload image');
       }
 
       const uploadResult = await uploadResponse.json();
@@ -199,7 +264,7 @@ export function PlantsComponent({
       }
     } catch (error) {
       console.error('Error handling image:', error);
-      alert('Failed to upload image. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.');
     }
   };
 
@@ -249,9 +314,24 @@ export function PlantsComponent({
     }
 
     try {
+      // Compress image before upload
+      let fileToUpload = file;
+      if (file.size > 1 * 1024 * 1024) { // If larger than 1MB
+        try {
+          fileToUpload = await compressImage(file);
+        } catch (compressError) {
+          console.warn('Image compression failed, trying original file:', compressError);
+        }
+      }
+
+      // Check file size again after compression
+      if (fileToUpload.size > 4.5 * 1024 * 1024) { // 4.5MB safe limit for serverless
+        throw new Error('Image is too large. Please choose a smaller image (under 5MB).');
+      }
+
       // Upload image to Cloudinary
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       formData.append('folder', 'plant-photos');
 
       const uploadResponse = await fetch('/api/upload', {
@@ -260,7 +340,8 @@ export function PlantsComponent({
       });
 
       if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image');
+        const errorData = await uploadResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload image');
       }
 
       const uploadResult = await uploadResponse.json();
@@ -273,7 +354,7 @@ export function PlantsComponent({
       });
     } catch (error) {
       console.error('Error adding photo:', error);
-      alert('Failed to add photo. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to add photo. Please try again.');
     }
   };
 

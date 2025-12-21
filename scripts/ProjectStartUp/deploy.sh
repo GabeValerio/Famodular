@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Source configuration
+source "$(dirname "$0")/config.env.project"
+
 # Colors for output
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
@@ -65,23 +68,30 @@ fi
 
 # Remote Server Deployment
 show_step "Deploying to production server..."
-ssh -A getvalerio << 'EOF'
-    cd TipsyToGoBar.com || exit 1
+ssh root@$SERVER_IP << EOF
+    cd ${PROJECT_NAME}.com || exit 1
     
     # Check and update remote URL if needed
     echo "Checking Git remote URL..."
-    current_url=$(git remote get-url origin)
-    if [[ $current_url == https* ]]; then
+    current_url=\$(git remote get-url origin)
+    if [[ \$current_url == https* ]]; then
         echo "Updating Git remote to use SSH..."
-        ssh_url=$(echo $current_url | sed 's|https://github.com/|git@github.com:|')
-        git remote set-url origin $ssh_url
+        ssh_url=\$(echo \$current_url | sed 's|https://github.com/|git@github.com:|')
+        git remote set-url origin \$ssh_url
     fi
     
     echo "Pulling latest changes..."
     git pull origin main || exit 1
 
     echo "Loading environment variables..."
-    source /root/.env.tipsytogobar || exit 1
+    # Determine env file name based on project name (lowercase)
+    PROJECT_NAME_LOWER=\$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+    if [ -f "/root/.env.\$PROJECT_NAME_LOWER" ]; then
+        source "/root/.env.\$PROJECT_NAME_LOWER"
+    else 
+        echo "Warning: .env file not found, trying .env.local"
+        [ -f .env.local ] && source .env.local
+    fi
 
     echo "Installing dependencies..."
     npm install || exit 1
@@ -90,14 +100,14 @@ ssh -A getvalerio << 'EOF'
     npm run build || exit 1
 
     echo "Restarting PM2 process..."
-    pm2 delete TipsyToGoBar.com 2>/dev/null || true
-    pm2 start npm --name "TipsyToGoBar.com" -- start -- -p 3001 || exit 1
+    pm2 delete $DOMAIN 2>/dev/null || true
+    pm2 start npm --name "$DOMAIN" -- start -- -p $PORT || exit 1
     pm2 save || exit 1
 
     # Verify the application is running
     echo "Verifying application status..."
     sleep 5
-    if ! curl -s -f http://localhost:3001 > /dev/null; then
+    if ! curl -s -f http://localhost:$PORT > /dev/null; then
         echo "Application failed to start properly"
         exit 1
     fi
@@ -105,4 +115,5 @@ EOF
 
 check_status "Failed to deploy to production server"
 
-show_success "🚀 Deployment completed successfully!" 
+show_success "🚀 Deployment completed successfully!"
+ 

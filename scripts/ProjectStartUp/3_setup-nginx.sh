@@ -11,11 +11,13 @@ set -e  # Exit on error
 # Create Nginx configuration
 echo "📝 Creating Nginx configuration..."
 cat > "/etc/nginx/sites-available/$DOMAIN" << 'NGINXEOF'
-server {
-    listen 80;
-    server_name $DOMAIN www.$DOMAIN;
+    server {
+        listen 80;
+        server_name $DOMAIN www.$DOMAIN;
+        
+        client_max_body_size 50M;
 
-    location / {
+        location / {
         proxy_pass http://localhost:$PORT;
         proxy_http_version 1.1;
         proxy_set_header Upgrade \$http_upgrade;
