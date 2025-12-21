@@ -2,6 +2,20 @@
 
 ## Recent Changes
 
+### January 2025
+
+#### Branding & Homepage Updates
+- **Complete rebranding**: Updated all references from "Next.js Starter Template" to "Famodular"
+- **Community center focus**: Changed branding from "family management" to "community center platform for groups of any kind"
+- **Homepage redesign**:
+  - Updated hero section: "Your Community Center, Your Way"
+  - Replaced generic template content with Famodular-specific features
+  - Updated feature cards to reflect community center modules (Calendar, Todos, Check-ins, Goals, Finance, Plants)
+  - Changed all "family" references to "group" terminology
+- **User avatar display**: Added avatar display on homepage when user is logged in, fetching from database
+- **Footer integration**: Imported and integrated Footer component with designer credit
+- **Metadata updates**: Updated page title and description to reflect community center platform
+
 ### December 21, 2025
 
 #### Plants Module Updates

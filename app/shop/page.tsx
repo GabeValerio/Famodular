@@ -132,8 +132,8 @@ export default function ShopPage() {
               Build Your E-commerce Store
             </h3>
             <p className="text-gray-600 mb-6">
-              This is a starter template. Replace the sample products with your own
-              product catalog and connect to your preferred e-commerce platform.
+              Browse and purchase items from the Famodular shop. Add items to your cart
+              and checkout securely with Stripe.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button variant="outline">

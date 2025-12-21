@@ -1,6 +1,6 @@
-# Next.js Starter Template
+# Famodular
 
-A modern, full-featured Next.js starter template with authentication, payments, and admin panel.
+A modular community center platform for groups of any kind with customizable modules for calendars, todos, check-ins, goals, finance, and more.
 
 ## Features
 
@@ -77,8 +77,8 @@ CREATE TABLE site_config (
 
 -- Insert default site config
 INSERT INTO site_config (key, value, description) VALUES
-  ('site_name', '"My App"', 'The name of your application'),
-  ('site_description', '"A modern web application"', 'Site description'),
+  ('site_name', '"Famodular"', 'The name of your application'),
+  ('site_description', '"A modular family management platform"', 'Site description'),
   ('maintenance_mode', 'false', 'Whether the site is in maintenance mode');
 ```
 

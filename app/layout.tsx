@@ -7,8 +7,8 @@ import { CartProvider } from '@/lib/CartContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Next.js Starter Template',
-  description: 'A modern Next.js starter template with authentication, payments, and admin panel',
+  title: 'Famodular - Community Center Platform',
+  description: 'A modular community center platform for groups of any kind. Customize your experience with the modules you need—calendars, todos, check-ins, goals, finance, and more',
 };
 
 export default function RootLayout({

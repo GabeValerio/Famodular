@@ -2,7 +2,7 @@
   "name": "famodular",
   "version": "0.1.0",
   "private": true,
-  "description": "A modern Next.js starter template with authentication, payments, and admin panel",
+  "description": "A modular community center platform for groups of any kind with customizable modules for calendars, todos, check-ins, goals, finance, and more",
   "scripts": {
     "dev": "next dev -p 3008",
     "build": "next build",
