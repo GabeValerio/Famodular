@@ -153,6 +153,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           chat: true,
           wishlist: true,
           location: true,
+          plants: true,
           calendar: true,
           todos: true,
         },
