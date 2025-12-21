@@ -83,3 +83,4 @@ export const suggestActivity = async (theme: string): Promise<{ title: string; d
   ];
   return activities[Math.floor(Math.random() * activities.length)];
 };
+

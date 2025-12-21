@@ -16,3 +16,4 @@ SET enabled_modules = '{
 WHERE enabled_modules::text LIKE '%"finance": true%' 
   AND enabled_modules::text LIKE '%"goals": true%'
   AND enabled_modules::text LIKE '%"checkins": true%';
+

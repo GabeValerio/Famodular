@@ -190,3 +190,4 @@ export function InviteMemberDialog({ open, onOpenChange, groupId, groupName }: I
     </Dialog>
   );
 }
+

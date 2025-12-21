@@ -128,7 +128,7 @@ export function GroupDropdown({ className }: GroupDropdownProps) {
       </button>
       <span className="text-[10px] text-center mt-1 leading-tight whitespace-nowrap">{displayName}</span>
       {isDropdownOpen && (
-        <div className="absolute top-full left-0 mt-2 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50">
+        <div className="absolute top-full right-0 mt-2 w-56 rounded-md border bg-popover text-popover-foreground shadow-md z-50">
           <div className="p-1">
             <div
               className={cn(

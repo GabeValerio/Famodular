@@ -35,3 +35,4 @@ Modules will be **context-aware** but not **category-restricted**:
 - A module checks if it's in self view or group view
 - It adapts its behavior accordingly (e.g., todos shows personal todos in self view, group todos in group view)
 - But the module itself can be enabled/disabled in either context
+

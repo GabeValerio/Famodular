@@ -43,7 +43,7 @@ export function usePlants(groupId: string) {
   const updatePlant = async (id: string, updates: UpdatePlantInput) => {
     try {
       const updatedPlant = await plantsService.updatePlant(id, updates);
-      setPlants(prev => prev.map(p => p.id === id ? updatedPlant : p));
+      setPlants(prev => prev.map(p => p.id === id ? { ...updatedPlant, latestPhotoUrl: p.latestPhotoUrl } : p));
       return updatedPlant;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update plant');
@@ -66,7 +66,7 @@ export function usePlants(groupId: string) {
       const updatedPlant = await plantsService.updatePlant(id, {
         lastWatered: new Date(),
       });
-      setPlants(prev => prev.map(p => p.id === id ? updatedPlant : p));
+      setPlants(prev => prev.map(p => p.id === id ? { ...updatedPlant, latestPhotoUrl: p.latestPhotoUrl } : p));
       return updatedPlant;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to mark plant as watered');

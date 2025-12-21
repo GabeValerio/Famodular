@@ -107,3 +107,4 @@ If you're stuck:
 2. Verify the server IP is correct: `24.144.69.238`
 3. Use `nslookup famodular.com` to check if DNS has propagated
 
+

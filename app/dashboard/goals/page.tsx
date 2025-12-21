@@ -24,5 +24,5 @@ export default function GoalsRoute() {
     );
   }
 
-  return <GoalsPage groupId={currentGroup.id} />;
+  return <GoalsPage groupId={currentGroup.id} group={currentGroup} />;
 }

@@ -195,3 +195,4 @@ import './widgets';
 - **Each widget uses its module's hooks and services**
 
 This gives modules complete flexibility to add dashboard widgets while keeping everything organized and type-safe!
+

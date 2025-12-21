@@ -230,3 +230,4 @@ Navbar/UI shows/hides module accordingly
 - ✅ System automatically uses the correct configuration based on current context
 
 This gives maximum flexibility: users can customize their personal view, and each group can customize its group view independently!
+

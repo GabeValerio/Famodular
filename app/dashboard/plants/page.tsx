@@ -29,3 +29,4 @@ export default function PlantsRoute() {
   return <PlantsPage groupId={currentGroup.id} />;
 }
 
+

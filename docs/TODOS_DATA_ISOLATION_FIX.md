@@ -127,3 +127,4 @@ groupId: groupId || undefined  // Based on context, not category
 ✅ **No data leakage** between Self and Group contexts  
 
 The system now ensures complete data isolation for todos and projects!
+

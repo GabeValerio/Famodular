@@ -2,8 +2,10 @@
 
 import { useGoals } from '../hooks/useGoals';
 import { GoalsComponent } from '../components/GoalsComponent';
+import { useSession } from 'next-auth/react';
 
-export function GoalsPage({ groupId }: { groupId: string }) {
+export function GoalsPage({ groupId, group }: { groupId: string; group?: any }) {
+  const { data: session } = useSession();
   const {
     goals,
     members,
@@ -35,14 +37,15 @@ export function GoalsPage({ groupId }: { groupId: string }) {
     );
   }
 
-  // Get current user from members (in real app, get from session)
-  const currentUser = members[0] || { id: '', name: '', avatar: '', role: 'Parent' as const };
+  // Get current user from members based on session
+  const currentUser = members.find(m => m.id === session?.user?.id) || members[0] || { id: '', name: '', avatar: '', role: 'Parent' as const };
 
   return (
     <GoalsComponent
       goals={goals}
       members={members}
       currentUser={currentUser}
+      group={group}
       onAddGoal={addGoal}
       onUpdateGoal={updateGoal}
       onDeleteGoal={deleteGoal}

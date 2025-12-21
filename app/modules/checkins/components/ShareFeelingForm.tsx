@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/app/components/ui/button';
 import { Textarea } from '@/app/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Send, Check } from 'lucide-react';
 import { MOODS, getMoodConfig } from '../utils';
 import { CheckIn, FamilyMember, Question } from '../types';
@@ -38,7 +39,7 @@ export function ShareFeelingForm({
 
   const isCompact = variant === 'compact';
   const moodCount = isCompact ? 10 : MOODS.length;
-  const visibleMoods = MOODS.slice(0, moodCount);
+  const visibleMoods = MOODS.slice(0, moodCount).sort((a, b) => a.type.localeCompare(b.type));
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -84,10 +85,36 @@ export function ShareFeelingForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Mood Selection */}
       <div>
-        <label className={`block ${isCompact ? 'text-xs' : 'text-sm'} font-medium ${isCompact ? 'text-muted-foreground' : 'text-slate-700'} mb-2`}>
-          How are you feeling?
-        </label>
-        <div className={`grid gap-2 ${isCompact ? 'grid-cols-5' : 'grid-cols-5'}`}>
+        {/* Mobile Dropdown */}
+        <div className="block md:hidden">
+          <div className="flex items-center gap-3">
+            <label className={`text-sm font-medium text-slate-700 whitespace-nowrap`}>
+              How are you feeling?
+            </label>
+            <Select value={selectedMood || ''} onValueChange={(value) => setSelectedMood(value as CheckIn['mood'])}>
+              <SelectTrigger className="flex-1">
+                <SelectValue placeholder="Select mood..." />
+              </SelectTrigger>
+              <SelectContent>
+                {visibleMoods.map((mood) => (
+                  <SelectItem key={mood.type} value={mood.type}>
+                    <div className="flex items-center gap-2">
+                      <span>{mood.emoji}</span>
+                      <span>{mood.type}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Desktop Grid */}
+        <div className="hidden md:block">
+          <label className={`block text-sm font-medium text-slate-700 mb-2`}>
+            How are you feeling?
+          </label>
+          <div className={`grid gap-2 ${isCompact ? 'grid-cols-5' : 'grid-cols-5'}`}>
           {visibleMoods.map((mood) => (
             <button
               key={mood.type}
@@ -118,6 +145,7 @@ export function ShareFeelingForm({
             {getMoodConfig(selectedMood).type}
           </p>
         )}
+      </div>
       </div>
 
       {/* Note */}

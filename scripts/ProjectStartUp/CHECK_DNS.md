@@ -130,3 +130,4 @@ curl -I http://famodular.com
 
 If DNS is working but Nginx isn't set up yet, you'll get a connection error (that's normal). Once you run script 3 (Nginx setup), this should return an HTTP response.
 
+

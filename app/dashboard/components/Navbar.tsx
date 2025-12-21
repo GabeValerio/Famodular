@@ -70,10 +70,10 @@ export function Sidebar({ className }: { className?: string }) {
       <div className={cn("border-b bg-background", className)}>
         <div className="px-4 py-4">
           <div className="flex items-center space-x-6">
-            <GroupDropdown />
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 flex-1">
               <div className="text-sm text-muted-foreground">Loading modules...</div>
             </div>
+            <GroupDropdown />
           </div>
         </div>
       </div>
@@ -84,9 +84,6 @@ export function Sidebar({ className }: { className?: string }) {
     <div className={cn("border-b bg-background", className)}>
       <div className="px-4 py-4">
         <div className="flex items-center space-x-6">
-          {/* Group Dropdown */}
-          <GroupDropdown />
-
           {/* Navigation Items - only show enabled modules */}
           <div className="flex items-center space-x-2 overflow-x-auto flex-1">
             {visibleItems.map((item) => (
@@ -103,6 +100,9 @@ export function Sidebar({ className }: { className?: string }) {
               </Button>
             ))}
           </div>
+
+          {/* Group Dropdown */}
+          <GroupDropdown />
         </div>
       </div>
     </div>

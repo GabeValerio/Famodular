@@ -37,3 +37,4 @@ SET enabled_modules = '{
 }'::jsonb
 WHERE enabled_modules IS NULL;
 
+

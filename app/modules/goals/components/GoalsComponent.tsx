@@ -1,155 +1,177 @@
 import React, { useState } from 'react';
 import { FamilyMember, Goal, GoalType, Timeframe } from '@/types/family';
-import { Target, Plus, Wand2, Trash2, CheckCircle2 } from 'lucide-react';
-import { getGoalAdvice } from '@/lib/services/geminiService';
+import { Target, Plus, Trash2, CheckCircle2, Filter } from 'lucide-react';
 
 interface GoalsComponentProps {
   goals: Goal[];
   members: FamilyMember[];
   currentUser: FamilyMember;
+  group?: any;
   onAddGoal: (goal: Omit<Goal, 'id'>) => Promise<Goal>;
   onUpdateGoal: (goal: Goal) => Promise<void>;
   onDeleteGoal: (id: string) => Promise<void>;
 }
 
-export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, currentUser, onAddGoal, onUpdateGoal, onDeleteGoal }) => {
+export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, currentUser, group, onAddGoal, onUpdateGoal, onDeleteGoal }) => {
+  // Get the groupId from the group prop
+  const groupId = group?.id;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [filterType, setFilterType] = useState<'All' | GoalType>('All');
-  const [loadingAdvice, setLoadingAdvice] = useState<string | null>(null);
+  const [timeframeFilter, setTimeframeFilter] = useState<'all' | 'one-year'>('all');
+  const [memberFilter, setMemberFilter] = useState<string>('all');
 
   // New Goal State
   const [newTitle, setNewTitle] = useState('');
-  const [newType, setNewType] = useState<GoalType>(GoalType.PERSONAL);
-  const [newTimeframe, setNewTimeframe] = useState<Timeframe>(Timeframe.ONE_YEAR);
+  const [newTimeframe, setNewTimeframe] = useState<Timeframe>(Timeframe.SIX_MONTH);
+  const [newOwnerId, setNewOwnerId] = useState<string>('family');
 
   const handleAdd = async () => {
+    if (!groupId) {
+      console.error('No group ID available');
+      return;
+    }
+
     const newGoal: Omit<Goal, 'id'> = {
       title: newTitle,
       description: '',
-      ownerId: newType === GoalType.FAMILY ? 'family' : currentUser.id,
-      groupId: '1', // TODO: Get from current group context
-      type: newType,
+      ownerId: newOwnerId,
+      groupId: groupId,
+      type: newOwnerId === 'family' ? GoalType.FAMILY : GoalType.PERSONAL,
       timeframe: newTimeframe,
       progress: 0,
     };
     await onAddGoal(newGoal);
     setIsModalOpen(false);
     setNewTitle('');
+    setNewTimeframe(Timeframe.SIX_MONTH);
+    setNewOwnerId('family');
   };
 
-  const handleGetAdvice = async (goal: Goal) => {
-    setLoadingAdvice(goal.id);
-    const tips = await getGoalAdvice(goal);
-    await onUpdateGoal({ ...goal, aiTips: tips });
-    setLoadingAdvice(null);
-  };
 
-  const filteredGoals = goals.filter(g => {
-    if (filterType === 'All') return true;
-    return g.type === filterType;
+  const filteredGoals = goals.filter(goal => {
+    // Timeframe filter
+    if (timeframeFilter === 'one-year' && goal.timeframe !== Timeframe.ONE_YEAR) {
+      return false;
+    }
+
+    // Member filter
+    if (memberFilter === 'all') {
+      return true;
+    }
+    if (memberFilter === 'family') {
+      return goal.ownerId === 'family';
+    }
+    return goal.ownerId === memberFilter;
   });
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800">Family Ambitions</h2>
-          <p className="text-slate-500">Tracking our shared and personal dreams.</p>
+          <h2 className="text-2xl font-bold text-slate-800">Goals</h2>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          <Plus size={18} /> New Goal
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setTimeframeFilter(timeframeFilter === 'all' ? 'one-year' : 'all')}
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+            title={`Show ${timeframeFilter === 'all' ? '1 Year goals only' : 'all goals'}`}
+          >
+            <Filter size={18} />
+            {timeframeFilter === 'all' ? '1 Year' : 'All Timeframes'}
+          </button>
+
+          {/* Member filter buttons */}
+          <div className="flex gap-1 bg-white border border-slate-200 rounded-lg p-1">
+            <button
+              onClick={() => setMemberFilter('all')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                memberFilter === 'all'
+                  ? 'bg-slate-800 text-white'
+                  : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setMemberFilter('family')}
+              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                memberFilter === 'family'
+                  ? 'bg-indigo-600 text-white'
+                  : 'text-indigo-600 hover:bg-indigo-50'
+              }`}
+            >
+              Family
+            </button>
+            {members.map((member) => (
+              <button
+                key={member.id}
+                onClick={() => setMemberFilter(member.id)}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                  memberFilter === member.id
+                    ? 'bg-emerald-600 text-white'
+                    : 'text-emerald-600 hover:bg-emerald-50'
+                }`}
+              >
+                <img src={member.avatar} alt={member.name} className="w-4 h-4 rounded-full" />
+                {member.name}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+          >
+            <Plus size={18} /> New Goal
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-2 border-b border-slate-200 pb-4">
-        <button
-          onClick={() => setFilterType('All')}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === 'All' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilterType(GoalType.FAMILY)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === GoalType.FAMILY ? 'bg-indigo-600 text-white' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'}`}
-        >
-          Family
-        </button>
-        <button
-          onClick={() => setFilterType(GoalType.PERSONAL)}
-          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${filterType === GoalType.PERSONAL ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'}`}
-        >
-          Personal
-        </button>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="space-y-3">
         {filteredGoals.map((goal) => {
           const owner = members.find(m => m.id === goal.ownerId);
           return (
-            <div key={goal.id} className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col h-full group hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start mb-4">
-                <span className={`text-xs font-semibold px-2 py-1 rounded uppercase tracking-wider ${goal.type === GoalType.FAMILY ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                  {goal.timeframe}
-                </span>
-                {goal.type === GoalType.PERSONAL && owner && (
-                  <img src={owner.avatar} alt={owner.name} className="w-8 h-8 rounded-full border-2 border-white shadow-sm" title={owner.name} />
-                )}
-              </div>
-
-              <div className="flex-1">
-                <h3 className="font-bold text-lg text-slate-800 mb-2 leading-tight">{goal.title}</h3>
-
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-slate-600">Progress</span>
-                    <span className="font-semibold text-slate-800">{goal.progress}%</span>
-                  </div>
-                  <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${goal.progress}%` }}></div>
+            <div key={goal.id} className="bg-white p-4 rounded-lg border border-slate-200 hover:shadow-sm transition-shadow">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="flex items-center gap-2">
+                    {goal.ownerId === 'family' ? (
+                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                        <span className="text-xs font-bold text-indigo-700">👨‍👩‍👧‍👦</span>
+                      </div>
+                    ) : owner ? (
+                      <img src={owner.avatar} alt={owner.name} className="w-8 h-8 rounded-full border border-slate-200" />
+                    ) : null}
+                    <div>
+                      <h3 className="font-semibold text-slate-800">{goal.title}</h3>
+                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${goal.type === GoalType.FAMILY ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                          {goal.timeframe}
+                        </span>
+                        <span>
+                          {goal.ownerId === 'family' ? `${group?.name || 'Family'} Goal` : owner?.name || 'Unknown'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {goal.aiTips && goal.aiTips.length > 0 && (
-                  <div className="bg-indigo-50 p-3 rounded-lg mb-4">
-                    <div className="flex items-center gap-1 mb-2">
-                      <Wand2 size={14} className="text-indigo-600" />
-                      <span className="text-xs font-semibold text-indigo-700 uppercase tracking-wider">AI Tips</span>
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-sm font-semibold text-slate-800">{goal.progress}%</div>
+                    <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-full bg-indigo-500 rounded-full transition-all duration-500" style={{ width: `${goal.progress}%` }}></div>
                     </div>
-                    <ul className="text-sm text-indigo-800 space-y-1">
-                      {goal.aiTips.map((tip, idx) => (
-                        <li key={idx} className="flex items-start gap-2">
-                          <span className="text-indigo-500 mt-0.5">•</span>
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
                   </div>
-                )}
-              </div>
 
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={() => handleGetAdvice(goal)}
-                  disabled={loadingAdvice === goal.id}
-                  className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 px-3 rounded-lg text-sm font-medium flex items-center justify-center gap-1 transition-colors disabled:opacity-50"
-                >
-                  {loadingAdvice === goal.id ? (
-                    <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full"></div>
-                  ) : (
-                    <><Wand2 size={14} /> Get Tips</>
-                  )}
-                </button>
-                <button
-                  onClick={() => onDeleteGoal(goal.id)}
-                  className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Delete goal"
-                >
-                  <Trash2 size={16} />
-                </button>
+                  <button
+                    onClick={() => onDeleteGoal(goal.id)}
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                    title="Delete goal"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -175,14 +197,18 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Whose goal is this?</label>
                 <select
-                  value={newType}
-                  onChange={(e) => setNewType(e.target.value as GoalType)}
+                  value={newOwnerId}
+                  onChange={(e) => setNewOwnerId(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value={GoalType.PERSONAL}>Personal</option>
-                  <option value={GoalType.FAMILY}>Family</option>
+                  <option value="family">{group?.name || 'Family'} Goal</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.name}'s Goal
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -193,10 +219,10 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
                   onChange={(e) => setNewTimeframe(e.target.value as Timeframe)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
+                  <option value={Timeframe.SIX_MONTH}>6 Months</option>
                   <option value={Timeframe.ONE_YEAR}>1 Year</option>
                   <option value={Timeframe.THREE_YEAR}>3 Years</option>
                   <option value={Timeframe.FIVE_YEAR}>5 Years</option>
-                  <option value={Timeframe.TEN_YEAR}>10 Years</option>
                 </select>
               </div>
             </div>

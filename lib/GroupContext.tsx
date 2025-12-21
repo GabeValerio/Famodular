@@ -77,14 +77,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       
       if (profileResponse?.ok) {
         const profile = await profileResponse.json();
-        console.log('GroupContext - Fetched user profile:', {
-          hasAvatar: !!profile.avatar,
-          avatar: profile.avatar ? `${profile.avatar.substring(0, 50)}...` : null,
-          name: profile.name,
-          phone: profile.phone,
-          default_view: profile.default_view
-        });
-        
+
         if (profile.default_view) {
           userDefaultView = profile.default_view;
         }
@@ -110,12 +103,6 @@ export function GroupProvider({ children }: { children: ReactNode }) {
         groups: [],
         defaultView: userDefaultView,
       };
-
-      console.log('GroupContext - Created userData:', {
-        id: userData.id,
-        hasAvatar: !!userData.avatar,
-        avatar: userData.avatar ? `${userData.avatar.substring(0, 50)}...` : null
-      });
 
       if (modulesResponse?.ok) {
         const { enabledModules } = await modulesResponse.json();

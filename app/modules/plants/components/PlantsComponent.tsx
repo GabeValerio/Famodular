@@ -243,17 +243,27 @@ export function PlantsComponent({
 
       // If creating a new plant, open modal with image ready for analysis
       if (!editingPlant) {
-        setFormData({
-          name: '',
-          commonName: '',
-          location: '',
-          recommendedWaterSchedule: '',
-          waterAmount: '',
-          lastWatered: '',
-        });
+        // If modal isn't open, reset form (assuming new flow). 
+        // If modal is open, we might be inside the modal adding a photo, so keep typed data if any, 
+        // but typically "Start with Photo" implies fresh start. 
+        // However, if user typed name then clicked "Add Photo", we probably shouldn't wipe it.
+        // But the previous behavior (lines 246-253) was to reset. 
+        // Let's safe-guard: if modal is NOT open, reset. If it IS open, keep existing form data.
+        
+        if (!isModalOpen) {
+           setFormData({
+             name: '',
+             commonName: '',
+             location: '',
+             recommendedWaterSchedule: '',
+             waterAmount: '',
+             lastWatered: '',
+           });
+           setIsModalOpen(true);
+        }
+        
         setPendingPhotoUrl(imageUrl);
         setPendingPhotoBase64(base64String);
-        setIsModalOpen(true);
       } else {
         // Add photo to existing plant
         await addPhoto({
@@ -391,20 +401,12 @@ export function PlantsComponent({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-row justify-between items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">House Plants</h2>
-          <p className="text-slate-500">Track and care for your plants</p>
         </div>
         <div className="flex gap-2">
-          <Button
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Camera className="mr-2 h-4 w-4" />
-            Add Plant from Photo
-          </Button>
-          <Button onClick={() => handleOpenModal()} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => handleOpenModal()} className="bg-black hover:bg-slate-800 text-white">
             <Plus className="mr-2 h-4 w-4" />
             Add Plant
           </Button>
@@ -421,21 +423,21 @@ export function PlantsComponent({
       {plants.length === 0 ? (
         <Card className="p-12 text-center">
           <p className="text-muted-foreground mb-4">No plants yet. Add your first plant to get started!</p>
-          <Button onClick={() => handleOpenModal()} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+          <Button onClick={() => handleOpenModal()} className="bg-black hover:bg-slate-800 text-white">
             <Plus className="mr-2 h-4 w-4" />
             Add Your First Plant
           </Button>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2 md:gap-4">
           {plants.map(plant => {
             const wateringStatus = getWateringStatus(plant);
             
             return (
-              <Card key={plant.id} className="p-4 hover:shadow-md transition-shadow">
-                <div className="space-y-3">
-                  {/* Plant Image - placeholder for now, actual photos shown in gallery */}
-                  <div className="aspect-square rounded-lg bg-gray-100 flex items-center justify-center cursor-pointer overflow-hidden"
+              <Card key={plant.id} className="p-0 hover:shadow-md transition-shadow overflow-hidden">
+                <div className="flex flex-col h-full">
+                  {/* Plant Image - takes full width at top */}
+                  <div className="aspect-square w-full bg-gray-100 flex items-center justify-center cursor-pointer overflow-hidden"
                        onClick={() => {
                          setSelectedPlant(plant);
                          setIsPhotoModalOpen(true);
@@ -451,77 +453,75 @@ export function PlantsComponent({
                     )}
                   </div>
 
-                  {/* Plant Info */}
-                  <div>
-                    <h3 className="font-semibold text-lg text-slate-800">{plant.name}</h3>
-                    {plant.commonName && (
-                      <p className="text-sm text-slate-600">{plant.commonName}</p>
-                    )}
-                    {plant.location && (
-                      <p className="text-sm text-slate-500 mt-1">📍 {plant.location}</p>
-                    )}
-                  </div>
-
-                  {/* Watering Info */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-600">Watering:</span>
-                      <span className={`text-sm font-medium ${wateringStatus.color}`}>
-                        {wateringStatus.label}
-                      </span>
+                  <div className="p-3 space-y-2 flex-1 flex flex-col">
+                    {/* Plant Info */}
+                    <div>
+                      <h3 className="font-semibold text-base md:text-lg text-slate-800 truncate">{plant.name}</h3>
                     </div>
-                    {plant.recommendedWaterSchedule && (
-                      <p className="text-xs text-slate-500">
-                        Schedule: {plant.recommendedWaterSchedule}
-                      </p>
-                    )}
-                    {plant.waterAmount && (
-                      <p className="text-xs text-slate-500">
-                        Amount: {plant.waterAmount}
-                      </p>
-                    )}
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 pt-2 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onMarkAsWatered(plant.id)}
-                      className="flex-1"
-                    >
-                      <Droplet className="h-4 w-4 mr-1" />
-                      Water
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSelectedPlant(plant);
-                        setIsPhotoModalOpen(true);
-                      }}
-                    >
-                      <Camera className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenModal(plant)}
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this plant?')) {
-                          onDeletePlant(plant.id);
-                        }
-                      }}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {/* Watering Info */}
+                    <div className="space-y-1 flex-1">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-1">
+                        <span className="text-xs text-slate-600">Watering:</span>
+                        <span className={`text-xs font-medium ${wateringStatus.color}`}>
+                          {wateringStatus.label}
+                        </span>
+                      </div>
+                      {plant.recommendedWaterSchedule && (
+                        <p className="hidden md:block text-xs text-slate-500">
+                          Schedule: {plant.recommendedWaterSchedule}
+                        </p>
+                      )}
+                      {plant.waterAmount && (
+                        <p className="hidden md:block text-xs text-slate-500">
+                          Amount: {plant.waterAmount}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-1 pt-2 border-t flex-wrap justify-center">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onMarkAsWatered(plant.id)}
+                        className="flex-1 h-8 px-2 text-xs"
+                      >
+                        <Droplet className="h-3 w-3 mr-1" />
+                        <span className="hidden md:inline">Water</span>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPlant(plant);
+                          setIsPhotoModalOpen(true);
+                        }}
+                        className="h-8 w-8 px-0"
+                      >
+                        <Camera className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenModal(plant)}
+                        className="h-8 w-8 px-0"
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (confirm('Are you sure you want to delete this plant?')) {
+                            onDeletePlant(plant.id);
+                          }
+                        }}
+                        className="text-red-600 hover:text-red-700 h-8 w-8 px-0"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </Card>
@@ -537,39 +537,60 @@ export function PlantsComponent({
             <DialogTitle>{editingPlant ? 'Edit Plant' : 'Add New Plant'}</DialogTitle>
           </DialogHeader>
           
-          {/* Show uploaded image if available */}
-          {pendingPhotoUrl && !editingPlant && (
+          {/* Show uploaded image or existing plant image */}
+          {(pendingPhotoUrl || editingPlant?.latestPhotoUrl) ? (
             <div className="space-y-2 mb-4">
               <div className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 border-2 border-gray-200">
                 <img
-                  src={pendingPhotoUrl}
-                  alt="Plant to identify"
+                  src={pendingPhotoUrl || editingPlant?.latestPhotoUrl}
+                  alt={editingPlant ? editingPlant.name : "Plant to identify"}
                   className="w-full h-full object-cover"
                 />
               </div>
+              
+              {/* Only show analyze button for new pending photos */}
+              {pendingPhotoUrl && !editingPlant && (
+                <>
+                  <Button
+                    type="button"
+                    onClick={handleAnalyzePlant}
+                    disabled={identifying}
+                    className="w-full bg-black hover:bg-slate-800 text-white"
+                  >
+                    {identifying ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        Analyze Plant
+                      </>
+                    )}
+                  </Button>
+                  {!identifying && (
+                    <p className="text-xs text-slate-500 text-center mt-1">
+                      Click to identify plant and auto-fill details below
+                    </p>
+                  )}
+                  {identifying && (
+                    <p className="text-sm text-indigo-600 text-center">
+                      Identifying plant and getting care instructions...
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          ) : !editingPlant && (
+            <div className="mb-4">
               <Button
                 type="button"
-                onClick={handleAnalyzePlant}
-                disabled={identifying}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
               >
-                {identifying ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    Analyze Plant
-                  </>
-                )}
+                <Camera className="mr-2 h-4 w-4" />
+                Start with a Photo
               </Button>
-              {identifying && (
-                <p className="text-sm text-indigo-600 text-center">
-                  Identifying plant and getting care instructions...
-                </p>
-              )}
             </div>
           )}
 
@@ -651,7 +672,7 @@ export function PlantsComponent({
               >
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">
+              <Button type="submit" className="flex-1 bg-black hover:bg-slate-800 text-white">
                 {editingPlant ? 'Update' : 'Create'}
               </Button>
             </div>
@@ -676,7 +697,7 @@ export function PlantsComponent({
                 <Button
                   onClick={() => photoFileInputRef.current?.click()}
                   size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="bg-black hover:bg-slate-800 text-white"
                 >
                   <Camera className="mr-2 h-4 w-4" />
                   Add Photo

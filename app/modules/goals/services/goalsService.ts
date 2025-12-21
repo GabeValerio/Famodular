@@ -1,4 +1,4 @@
-import { Goal } from '../types';
+import { Goal, FamilyMember } from '../types';
 
 const API_BASE = '/api/modules/group/goals';
 
@@ -6,6 +6,12 @@ export const goalsService = {
   async getGoals(groupId: string): Promise<Goal[]> {
     const response = await fetch(`${API_BASE}?groupId=${groupId}`);
     if (!response.ok) throw new Error('Failed to fetch goals');
+    return response.json();
+  },
+
+  async getMembers(groupId: string): Promise<FamilyMember[]> {
+    const response = await fetch(`${API_BASE}/members?groupId=${groupId}`);
+    if (!response.ok) throw new Error('Failed to fetch members');
     return response.json();
   },
 

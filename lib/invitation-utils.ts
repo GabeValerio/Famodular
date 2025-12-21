@@ -50,3 +50,4 @@ export function generateRegistrationLink(shortCode: string): string {
   return `${baseUrl}/register?invite=${shortCode}`;
 }
 
+

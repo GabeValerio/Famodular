@@ -15,7 +15,6 @@ export function CheckInsPage({ groupId }: { groupId: string }) {
     loading,
     error,
     addCheckIn,
-    addQuestion,
   } = useCheckIns(actualGroupId);
 
   if (loading) {
@@ -38,13 +37,14 @@ export function CheckInsPage({ groupId }: { groupId: string }) {
   const currentUser = members[0] || { id: '', name: '', avatar: '', role: 'Parent' as const };
 
   return (
-    <CheckInsComponent
-      checkIns={checkIns}
-      members={members}
-      currentUser={currentUser}
-      onAddCheckIn={addCheckIn}
-      questions={questions}
-      onAddQuestion={addQuestion}
-    />
+    <div className="-mt-4 md:-mt-6">
+      <CheckInsComponent
+        checkIns={checkIns}
+        members={members}
+        currentUser={currentUser}
+        onAddCheckIn={addCheckIn}
+        questions={questions}
+      />
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 export enum Timeframe {
+  SIX_MONTH = '6 Months',
   ONE_YEAR = '1 Year',
   THREE_YEAR = '3 Years',
   FIVE_YEAR = '5 Years',
-  TEN_YEAR = '10 Years',
 }
 
 export enum GoalType {

@@ -213,3 +213,4 @@ function MyComponent() {
 - ⚠️ Navigation updates: **Pending**
 
 The foundation is complete! Next step is to migrate the existing components and update the routes.
+

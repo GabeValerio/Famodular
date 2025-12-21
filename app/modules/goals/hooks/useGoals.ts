@@ -18,9 +18,12 @@ export function useGoals(groupId: string) {
     try {
       setLoading(true);
       setError(null);
-      const goalsData = await goalsService.getGoals(groupId);
+      const [goalsData, membersData] = await Promise.all([
+        goalsService.getGoals(groupId),
+        goalsService.getMembers(groupId),
+      ]);
       setGoals(goalsData);
-      // TODO: Load members from a shared service
+      setMembers(membersData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load goals');
     } finally {

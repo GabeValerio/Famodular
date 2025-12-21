@@ -187,3 +187,4 @@ modules/group/checkins/
 - ✅ Loose coupling
 - ✅ Reusable hooks and services
 
+

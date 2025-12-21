@@ -187,7 +187,6 @@ export default function SettingsPage() {
 
       if (data.success && data.data?.url) {
         const imageUrl = data.data.url;
-        console.log('Profile image uploaded successfully:', imageUrl);
         setPersonalSettings(prev => ({ ...prev, profilePicture: imageUrl }));
         
         // Automatically save the avatar to the database
@@ -209,7 +208,6 @@ export default function SettingsPage() {
 
           // Refresh user data to get the updated avatar
           await refreshUser();
-          console.log('Avatar saved successfully to database');
           // Success is silent - the image preview updates automatically
         } catch (saveError) {
           console.error('Error saving avatar:', saveError);
@@ -266,7 +264,6 @@ export default function SettingsPage() {
 
       if (data.success && data.data?.url) {
         const imageUrl = data.data.url;
-        console.log('Group image uploaded successfully:', imageUrl);
         setGroupSettings(prev => ({ ...prev, avatar: imageUrl }));
         
         // Automatically save the avatar to the database if a group is selected
@@ -296,8 +293,7 @@ export default function SettingsPage() {
             if (currentGroup?.id === selectedGroup.id) {
               setCurrentGroup(updatedGroup);
             }
-            
-            console.log('Group avatar saved successfully to database');
+
             // Success is silent - the image preview updates automatically
           } catch (saveError) {
             console.error('Error saving group avatar:', saveError);
@@ -331,10 +327,6 @@ export default function SettingsPage() {
         phone: personalSettings.phone || null,
       };
 
-      console.log('Saving personal settings:', {
-        payload: { ...payload, avatar: payload.avatar ? `${payload.avatar.substring(0, 50)}...` : null }
-      });
-
       const response = await fetch('/api/users/me', {
         method: 'PATCH',
         headers: {
@@ -349,7 +341,6 @@ export default function SettingsPage() {
       }
 
       const updatedUser = await response.json();
-      console.log('Personal settings saved successfully:', updatedUser);
 
       await refreshUser();
       alert('Personal settings saved successfully!');
@@ -406,11 +397,6 @@ export default function SettingsPage() {
         enabledModules: groupSettings.enabledModules,
       };
 
-      console.log('Saving group settings:', {
-        groupId: selectedGroup.id,
-        payload: { ...payload, avatar: payload.avatar ? `${payload.avatar.substring(0, 50)}...` : null }
-      });
-
       const response = await fetch(`/api/groups/${selectedGroup.id}`, {
         method: 'PATCH',
         headers: {
@@ -426,8 +412,7 @@ export default function SettingsPage() {
       }
 
       const updatedGroup = await response.json();
-      console.log('Group settings saved successfully:', updatedGroup);
-      
+
       // Refresh groups list to get updated data
       await refreshGroups();
       
@@ -537,7 +522,6 @@ export default function SettingsPage() {
 
       if (data.success && data.data?.url) {
         const imageUrl = data.data.url;
-        console.log('New group image uploaded successfully:', imageUrl);
         setNewGroup(prev => ({ ...prev, avatar: imageUrl }));
       } else {
         console.error('Upload response missing URL:', data);

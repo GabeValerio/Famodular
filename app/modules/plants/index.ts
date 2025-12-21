@@ -5,3 +5,4 @@ export { usePlants, usePlantPhotos } from './hooks/usePlants';
 export type { Plant, PlantPhoto, CreatePlantInput, UpdatePlantInput, CreatePlantPhotoInput, PlantIdentificationResult } from './types';
 export { plantsService } from './services/plantsService';
 
+

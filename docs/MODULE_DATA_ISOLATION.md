@@ -181,3 +181,4 @@ For each module, test:
 - [ ] Switching to self view shows personal data
 - [ ] No data leakage between contexts
 - [ ] API properly filters by context
+

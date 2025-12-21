@@ -46,16 +46,6 @@ export function useCheckIns(groupId: string) {
     }
   };
 
-  const addQuestion = async (question: Omit<Question, 'id' | 'timestamp'>) => {
-    try {
-      const newQuestion = await checkInsService.createQuestion(question);
-      setQuestions(prev => [newQuestion, ...prev]);
-      return newQuestion;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add question');
-      throw err;
-    }
-  };
 
   return {
     checkIns,
@@ -64,7 +54,6 @@ export function useCheckIns(groupId: string) {
     loading,
     error,
     addCheckIn,
-    addQuestion,
     refreshCheckIns: loadData,
   };
 }
