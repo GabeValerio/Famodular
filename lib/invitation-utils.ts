@@ -15,7 +15,7 @@ export function generateInviteToken(): string {
 export async function generateShortCode(): Promise<string> {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars like 0, O, I, 1
   const supabase = getSupabaseServerClient();
-  let code: string;
+  let code: string = '';
   let isUnique = false;
   
   while (!isUnique) {
@@ -49,3 +49,4 @@ export function generateRegistrationLink(shortCode: string): string {
   const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:3008';
   return `${baseUrl}/register?invite=${shortCode}`;
 }
+
