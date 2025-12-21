@@ -2,6 +2,7 @@
 
 import { useCalendar } from '../hooks/useCalendar';
 import { CalendarComponent } from '../components/CalendarComponent';
+import { CalendarEvent } from '../types';
 
 export function CalendarPage({ groupId }: { groupId: string }) {
   const {
@@ -9,10 +10,19 @@ export function CalendarPage({ groupId }: { groupId: string }) {
     members,
     loading,
     error,
-    addEvent,
-    updateEvent,
+    addEvent: addEventRaw,
+    updateEvent: updateEventRaw,
     deleteEvent,
   } = useCalendar(groupId);
+
+  // Wrap to match component prop types (Promise<void>)
+  const addEvent = async (event: Omit<CalendarEvent, 'id'>) => {
+    await addEventRaw(event);
+  };
+  
+  const updateEvent = async (event: CalendarEvent) => {
+    await updateEventRaw(event);
+  };
 
   if (loading) {
     return (

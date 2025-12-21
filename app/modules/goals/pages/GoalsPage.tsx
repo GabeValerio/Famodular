@@ -10,9 +10,14 @@ export function GoalsPage({ groupId }: { groupId: string }) {
     loading,
     error,
     addGoal,
-    updateGoal,
+    updateGoal: updateGoalRaw,
     deleteGoal,
   } = useGoals(groupId);
+
+  // Wrap updateGoal to match component prop type (Promise<void>)
+  const updateGoal = async (goal: import('../types').Goal) => {
+    await updateGoalRaw(goal);
+  };
 
   if (loading) {
     return (

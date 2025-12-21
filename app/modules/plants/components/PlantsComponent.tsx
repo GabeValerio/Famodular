@@ -112,8 +112,8 @@ export function PlantsComponent({
     try {
       const plantData = {
         name: formData.name,
-        commonName: formData.commonName || undefined,
-        location: formData.location || undefined,
+        commonName: formData.commonName || formData.name, // Default to name if not provided
+        location: formData.location || 'Unknown', // Default location if not provided
         recommendedWaterSchedule: formData.recommendedWaterSchedule || undefined,
         waterAmount: formData.waterAmount || undefined,
         lastWatered: formData.lastWatered ? new Date(formData.lastWatered) : undefined,

@@ -12,10 +12,18 @@ export default function CalendarRoute() {
     return AccessDenied ? <AccessDenied /> : null;
   }
 
-  // Calendar can work in both contexts, but data must be isolated
-  // Pass null for self view, groupId for group view (never empty string)
-  const groupId = isSelfView || !currentGroup ? null : currentGroup.id;
+  // Calendar module requires a group context
+  // If in self view or no group, show a message
+  if (isSelfView || !currentGroup) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-muted-foreground">
+          Calendar is only available in group context. Please select or create a group.
+        </div>
+      </div>
+    );
+  }
 
-  return <CalendarPage groupId={groupId} />;
+  return <CalendarPage groupId={currentGroup.id} />;
 }
 

@@ -61,7 +61,7 @@ export function useModules() {
     }
 
     // Group view: check group module configuration
-    return group.enabledModules?.[moduleId] ?? module.defaultEnabled;
+    return group.enabledModules?.[moduleId as keyof ModuleConfig] ?? module.defaultEnabled;
   };
 
   const getEnabledModules = (group: Group | null, user?: User | null): string[] => {

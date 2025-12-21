@@ -21,9 +21,9 @@ export function isModuleEnabled(
   };
 
   if (group === null) {
-    return user?.enabledModules?.[moduleId] ?? (defaultModules[moduleId] || false);
+    return user?.enabledModules?.[moduleId] ?? (defaultModules[moduleId as keyof typeof defaultModules] || false);
   }
-  return group.enabledModules?.[moduleId] ?? (defaultModules[moduleId] || false);
+  return group.enabledModules?.[moduleId] ?? (defaultModules[moduleId as keyof typeof defaultModules] || false);
 }
 
 export function getEnabledModules(group: Group | null, user?: User | null): ModuleId[] {

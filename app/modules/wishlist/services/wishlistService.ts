@@ -1,4 +1,4 @@
-import { WishlistItem } from '../../types';
+import { WishlistItem } from '../types';
 
 const API_BASE = '/api/modules/group/wishlist';
 

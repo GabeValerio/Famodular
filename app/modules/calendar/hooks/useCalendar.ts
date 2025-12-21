@@ -11,6 +11,9 @@ export function useCalendar(groupId: string) {
   useEffect(() => {
     if (groupId) {
       loadData();
+    } else {
+      setLoading(false);
+      setEvents([]);
     }
   }, [groupId]);
 

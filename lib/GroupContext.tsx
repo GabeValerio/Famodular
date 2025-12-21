@@ -129,6 +129,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           chat: false,
           wishlist: false,
           location: false,
+          plants: false,
           calendar: true,
           todos: true,
         };

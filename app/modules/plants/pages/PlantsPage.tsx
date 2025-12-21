@@ -9,10 +9,19 @@ export function PlantsPage({ groupId }: { groupId: string }) {
     loading,
     error,
     createPlant,
-    updatePlant,
+    updatePlant: updatePlantRaw,
     deletePlant,
-    markAsWatered,
+    markAsWatered: markAsWateredRaw,
   } = usePlants(groupId);
+
+  // Wrap to match component prop types (Promise<void>)
+  const updatePlant = async (id: string, updates: import('../types').UpdatePlantInput) => {
+    await updatePlantRaw(id, updates);
+  };
+
+  const markAsWatered = async (id: string) => {
+    await markAsWateredRaw(id);
+  };
 
   return (
     <PlantsComponent

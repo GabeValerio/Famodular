@@ -12,9 +12,17 @@ export default function GoalsRoute() {
     return AccessDenied ? <AccessDenied /> : null;
   }
 
-  // Goals can work in both contexts, but data must be isolated
-  // Pass null for self view, groupId for group view (never empty string)
-  const groupId = isSelfView || !currentGroup ? null : currentGroup.id;
+  // Goals module requires a group context
+  // If in self view or no group, show a message
+  if (isSelfView || !currentGroup) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-muted-foreground">
+          Goals is only available in group context. Please select or create a group.
+        </div>
+      </div>
+    );
+  }
 
-  return <GoalsPage groupId={groupId} />;
+  return <GoalsPage groupId={currentGroup.id} />;
 }

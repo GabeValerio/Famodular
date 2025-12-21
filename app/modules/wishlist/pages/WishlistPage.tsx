@@ -2,6 +2,7 @@
 
 import { useWishlist } from '../hooks/useWishlist';
 import { WishlistComponent } from '../components/WishlistComponent';
+import { WishlistItem } from '../types';
 
 export function WishlistPage({ groupId }: { groupId: string }) {
   const {
@@ -9,9 +10,14 @@ export function WishlistPage({ groupId }: { groupId: string }) {
     members,
     loading,
     error,
-    addItem,
+    addItem: addItemRaw,
     removeItem,
   } = useWishlist(groupId);
+
+  // Wrap to match component prop type (Promise<void>)
+  const addItem = async (item: Omit<WishlistItem, 'id'>) => {
+    await addItemRaw(item);
+  };
 
   if (loading) {
     return (
