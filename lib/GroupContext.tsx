@@ -217,7 +217,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       loading,
       setCurrentGroup, 
       setSelfView,
-      refreshGroups: fetchGroups,
+      refreshGroups: async () => { await fetchGroups(); },
       refreshUser: fetchUser,
     }}>
       {children}
