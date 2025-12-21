@@ -51,6 +51,10 @@ fi
 echo "🔧 Loading environment variables..."
 source "/root/.env.$PROJECT_NAME_LOWER"
 
+# Copy env file to project root so Next.js can use it during build
+echo "📋 Copying environment file to project root..."
+cp "/root/.env.$PROJECT_NAME_LOWER" .env.local
+
 # Install dependencies
 echo "📚 Installing dependencies..."
 npm install
