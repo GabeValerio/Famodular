@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(modules);
   } catch (error) {
-    console.error('Error fetching modules:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

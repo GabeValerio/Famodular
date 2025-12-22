@@ -42,7 +42,6 @@ export async function GET(
       .order('created_at', { ascending: false });
 
     if (invitationsError) {
-      console.error('Error fetching invitations:', invitationsError);
       return NextResponse.json(
         { error: 'Failed to fetch invitations' },
         { status: 500 }
@@ -51,7 +50,6 @@ export async function GET(
 
     return NextResponse.json({ invitations: invitations || [] });
   } catch (error) {
-    console.error('Error listing group invitations:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -181,15 +179,17 @@ export async function POST(
       .single();
 
     if (invitationError) {
-      console.error('Error creating invitation:', invitationError);
       return NextResponse.json(
         { error: 'Failed to create invitation' },
         { status: 500 }
       );
     }
 
-    // Generate registration link
-    const registrationLink = generateRegistrationLink(shortCode);
+    // Generate registration link using the current request URL
+    const protocol = request.headers.get('x-forwarded-proto') || new URL(request.url).protocol.slice(0, -1);
+    const host = request.headers.get('host') || request.headers.get('x-forwarded-host') || new URL(request.url).host;
+    const baseUrl = host ? `${protocol}://${host}` : undefined;
+    const registrationLink = generateRegistrationLink(shortCode, baseUrl);
 
     return NextResponse.json({
       invitation: {
@@ -203,7 +203,6 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating group invitation:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

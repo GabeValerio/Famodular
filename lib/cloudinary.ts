@@ -20,7 +20,7 @@ try {
   });
 } catch (error) {
   // During build time or when Cloudinary is not configured
-  console.warn('Cloudinary not configured:', error instanceof Error ? error.message : String(error));
+  // Cloudinary not configured
 }
 
 export { cloudinary };
@@ -56,8 +56,6 @@ export const uploadToCloudinary = async (
       bytes: result.bytes,
     };
   } catch (error: any) {
-    console.error('Cloudinary upload error:', error);
-    
     // Provide more specific error messages
     if (error.http_code === 401) {
       throw new Error('Cloudinary authentication failed. Please check your API credentials.');
@@ -79,7 +77,6 @@ export const deleteFromCloudinary = async (publicId: string, resourceType: 'imag
 
     return result;
   } catch (error) {
-    console.error('Cloudinary delete error:', error);
     throw error;
   }
 };

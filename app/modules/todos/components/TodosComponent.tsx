@@ -206,7 +206,6 @@ export function TodosComponent({
       }
       handleCloseModal();
     } catch (error) {
-      console.error('Failed to save todo:', error);
       // Show error to user
       const errorMessage = error instanceof Error ? error.message : 'Failed to save todo';
       alert(errorMessage); // TODO: Replace with a proper toast/notification component
@@ -237,7 +236,6 @@ export function TodosComponent({
       }
       handleCloseProjectModal();
     } catch (error) {
-      console.error('Failed to save project:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save project';
       alert(errorMessage);
     }

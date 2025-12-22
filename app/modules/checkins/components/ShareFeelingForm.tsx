@@ -66,7 +66,6 @@ export function ShareFeelingForm({
       // Reset success state after 3 seconds
       setTimeout(() => setSubmitted(false), 3000);
     } catch (error) {
-      console.error('Failed to submit check-in:', error);
     } finally {
       setSubmitting(false);
     }

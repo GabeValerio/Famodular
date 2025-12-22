@@ -51,7 +51,6 @@ export async function PATCH(
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       return NextResponse.json(
         { error: error.message || 'Failed to update project', code: error.code },
         { status: 400 }
@@ -107,9 +106,9 @@ export async function DELETE(
       );
     }
 
-    // Remove projectId from todos that belong to this project
+    // Remove projectId from todos that belong to this project (now in tasks table)
     await supabase
-      .from('todos')
+      .from('tasks')
       .update({ project_id: null })
       .eq('project_id', params.id)
       .eq('user_id', session.user.id);
@@ -122,7 +121,6 @@ export async function DELETE(
       .eq('user_id', session.user.id);
 
     if (error) {
-      console.error('Supabase error:', error);
       return NextResponse.json(
         { error: error.message || 'Failed to delete project', code: error.code },
         { status: 400 }

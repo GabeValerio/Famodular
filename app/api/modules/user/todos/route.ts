@@ -3,6 +3,42 @@ import { getSupabaseServerClient } from '@/lib/supabaseClient';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
+// Helper functions to map between todos (category) and tasks (type)
+// Todos API uses 'category' field, but we store in tasks.type
+const categoryToType = (category: string): string => {
+  // Map category values to type values
+  if (category === 'personal' || category === 'work' || category === 'group') {
+    return category;
+  }
+  return 'personal'; // default
+};
+
+const typeToCategory = (type: string | undefined): string => {
+  // Map type back to category for API compatibility
+  if (type === 'personal' || type === 'work' || type === 'group') {
+    return type;
+  }
+  return 'personal'; // default
+};
+
+// Helper to convert priority: text ('low','medium','high') <-> integer (3,2,1)
+const textPriorityToInt = (priority: string | number | undefined): number => {
+  if (typeof priority === 'number') return priority;
+  if (typeof priority === 'string') {
+    if (priority === 'high') return 1;
+    if (priority === 'medium') return 2;
+    if (priority === 'low') return 3;
+  }
+  return 0; // default
+};
+
+const intPriorityToText = (priority: number | undefined): string => {
+  if (priority === 1) return 'high';
+  if (priority === 2) return 'medium';
+  if (priority === 3) return 'low';
+  return 'medium'; // default
+};
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -11,7 +47,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!session.user?.id) {
-      console.error('Session user ID is missing');
       return NextResponse.json({ error: 'User ID not found in session' }, { status: 401 });
     }
 
@@ -25,27 +60,42 @@ export async function GET(request: NextRequest) {
     // Use server client (bypasses RLS)
     const supabase = getSupabaseServerClient();
     
-    // Build query
-    let query = supabase
-      .from('todos')
-      .select('*')
-      .eq('user_id', session.user.id);
-
-    // Filter by category if provided
-    if (category && category !== 'all') {
-      query = query.eq('category', category);
-    }
-
-    // CRITICAL: Filter by groupId to ensure data isolation
-    // If groupId is provided (group view), ONLY show that group's todos
-    // If groupId is null (self view), ONLY show personal todos (group_id IS NULL)
+    // CRITICAL: For group view, verify user is a member of the group
     if (groupId) {
-      // Group view: ONLY show todos for this specific group
+      const { data: groupMember } = await supabase
+        .from('group_members')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('user_id', session.user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (!groupMember) {
+        return NextResponse.json({ error: 'Forbidden: Not a member of this group' }, { status: 403 });
+      }
+    }
+    
+    // Build query - use tasks table instead of todos
+    // For group view: show ALL tasks for the group (any user in the group can see them)
+    // For self view: show ONLY the current user's personal tasks
+    let query = supabase
+      .from('tasks')
+      .select('*');
+
+    // CRITICAL: Filter by groupId FIRST to ensure proper data isolation
+    // If groupId is provided (group view), show ALL that group's todos (regardless of creator)
+    // If groupId is null (self view), ONLY show personal todos (group_id IS NULL) for current user
+    if (groupId) {
+      // Group view: Show ALL todos for this specific group (NO user_id filter)
       query = query.eq('group_id', groupId);
     } else {
-      // Self view: ONLY show personal/work todos (group_id IS NULL)
-      // This ensures group todos are NEVER shown in self view
-      query = query.is('group_id', null);
+      // Self view: Filter by user_id AND group_id IS NULL
+      query = query.eq('user_id', session.user.id).is('group_id', null);
+    }
+
+    // Filter by category if provided (map category to type)
+    if (category && category !== 'all') {
+      query = query.eq('type', categoryToType(category));
     }
 
     // Order by created date (newest first)
@@ -55,41 +105,39 @@ export async function GET(request: NextRequest) {
 
     // If table doesn't exist yet, return empty array (graceful degradation)
     if (error) {
-      console.error('Supabase query error:', error);
       // Check if it's a "relation does not exist" error (PostgreSQL error code 42P01)
       // Also check for PGRST116 which is PostgREST's "relation does not exist" error
       if (
-        error.code === '42P01' || 
+        error.code === '42P01' ||
         error.code === 'PGRST116' ||
         error.message?.includes('does not exist') ||
         error.message?.includes('relation') ||
         error.message?.includes('Could not find a relationship')
       ) {
-        console.warn('Todos table does not exist, returning empty array');
         return NextResponse.json([]);
       }
       throw error;
     }
 
     // Convert date strings to Date objects and map snake_case to camelCase
-    const todosWithDates = todos?.map(todo => ({
-      id: todo.id,
-      title: todo.title,
-      description: todo.description,
-      completed: todo.completed,
-      category: todo.category,
-      priority: todo.priority,
-      userId: todo.user_id,
-      groupId: todo.group_id,
-      projectId: todo.project_id,
-      dueDate: todo.due_date ? new Date(todo.due_date) : undefined,
-      createdAt: new Date(todo.created_at),
-      updatedAt: new Date(todo.updated_at),
+    // Map type back to category for backward compatibility
+    const todosWithDates = todos?.map(task => ({
+      id: task.id,
+      title: task.title || task.text,
+      description: task.description,
+      completed: task.completed,
+      category: typeToCategory(task.type), // Map type to category for API compatibility
+      priority: intPriorityToText(task.priority), // Convert integer priority to text
+      userId: task.user_id,
+      groupId: task.group_id,
+      projectId: task.project_id,
+      dueDate: task.due_date ? new Date(task.due_date) : undefined,
+      createdAt: new Date(task.created_at),
+      updatedAt: new Date(task.updated_at),
     })) || [];
 
     return NextResponse.json(todosWithDates);
   } catch (error) {
-    console.error('Todos API Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     const errorDetails = error instanceof Error ? { 
       message: errorMessage,
@@ -158,34 +206,37 @@ export async function POST(request: NextRequest) {
     }
 
     const now = new Date().toISOString();
-    const newTodo = {
+    // Convert category to type and priority text to integer
+    const newTask = {
       title,
+      text: title, // Also set text for compatibility
       description: description || null,
-      category,
-      priority: priority || 'medium',
+      type: categoryToType(category || 'personal'), // Map category to type
+      priority: textPriorityToInt(priority || 'medium'), // Convert text priority to integer
       completed: completed || false,
+      completed_at: completed ? now : null,
       user_id: session.user.id,
       // CRITICAL: Set group_id based on provided groupId (null for self view, groupId for group view)
       // This ensures proper data isolation
       group_id: normalizedGroupId,
       project_id: projectId || null,
       due_date: dueDate ? new Date(dueDate).toISOString() : null,
+      timezone: 'America/New_York', // Default timezone
       created_at: now,
       updated_at: now,
     };
 
     const { data: todo, error } = await supabase
-      .from('todos')
-      .insert(newTodo)
+      .from('tasks')
+      .insert(newTask)
       .select()
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       // If table doesn't exist, return a helpful error
       if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('relation') || error.code === 'PGRST116') {
         return NextResponse.json(
-          { error: 'Todos table does not exist. Please create the todos table in your database. See docs/TODOS_MODULE_SCHEMA.md for the SQL schema.' },
+          { error: 'Tasks table does not exist. Please create the tasks table in your database.' },
           { status: 503 }
         );
       }
@@ -197,13 +248,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert date strings to Date objects and map snake_case to camelCase
+    // Map type back to category and integer priority to text for backward compatibility
     const todoWithDates = {
       id: todo.id,
-      title: todo.title,
+      title: todo.title || todo.text,
       description: todo.description,
       completed: todo.completed,
-      category: todo.category,
-      priority: todo.priority,
+      category: typeToCategory(todo.type), // Map type to category
+      priority: intPriorityToText(todo.priority), // Convert integer priority to text
       userId: todo.user_id,
       groupId: todo.group_id,
       projectId: todo.project_id,

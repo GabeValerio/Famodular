@@ -69,7 +69,6 @@ export function GroupDropdown({ className }: GroupDropdownProps) {
             statusMap[group.id] = data.isAdmin || false;
           }
         } catch (error) {
-          console.error(`Error checking admin status for group ${group.id}:`, error);
           statusMap[group.id] = false;
         }
       }

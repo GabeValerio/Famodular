@@ -39,7 +39,6 @@ export async function GET(
       isActive: membership.is_active,
     });
   } catch (error) {
-    console.error('Error fetching group membership:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

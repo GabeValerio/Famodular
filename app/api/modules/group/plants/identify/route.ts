@@ -104,11 +104,9 @@ Please respond in the following JSON format:
         confidence: parsed.confidence || 'medium',
       };
     } catch (parseError) {
-      console.error('Failed to parse JSON from Gemini response:', text);
       throw new Error('Could not parse plant identification from AI response');
     }
   } catch (error) {
-    console.error('Error identifying plant:', error);
     // Helper to get error message safely
     const getErrorMessage = (err: any) => {
       if (err instanceof Error) return err.message;
@@ -147,7 +145,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(identification);
   } catch (error) {
-    console.error('Plant identification error:', error);
     const errorMessage = error instanceof Error 
       ? error.message 
       : 'Failed to identify plant';

@@ -54,7 +54,6 @@ export default function RegisterPage() {
         setError(data.error || 'Invalid invitation link');
       }
     } catch (err) {
-      console.error('Error validating invitation:', err);
       setError('Failed to validate invitation');
     } finally {
       setValidatingInvite(false);

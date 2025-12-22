@@ -18,7 +18,6 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Error fetching user profile:', error);
       throw error;
     }
 
@@ -34,7 +33,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Error fetching user:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -85,13 +83,11 @@ export async function PATCH(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('PATCH /api/users/me - Database update error:', error);
       throw error;
     }
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error updating user:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

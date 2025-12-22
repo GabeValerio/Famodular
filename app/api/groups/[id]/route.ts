@@ -59,7 +59,6 @@ export async function PATCH(
       .single();
 
     if (updateError) {
-      console.error('PATCH /api/groups/[id] - Database update error:', updateError);
       throw updateError;
     }
 

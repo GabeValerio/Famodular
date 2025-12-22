@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
             location: false,
             calendar: true,
             todos: true,
+            plants: false,
+            taskplanner: true,
           } as ModuleConfig,
         });
       }
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Return user's module configuration or defaults
-    // Default: Only Calendar and To Do enabled for new users
+    // Default: Calendar, To Do, and Task Planner enabled for new users
     const enabledModules = (user.enabled_modules as ModuleConfig) || {
       checkins: false,
       finance: false,
@@ -48,11 +50,12 @@ export async function GET(request: NextRequest) {
       location: false,
       calendar: true,
       todos: true,
+      plants: false,
+      taskplanner: true,
     };
 
     return NextResponse.json({ enabledModules });
   } catch (error) {
-    console.error('Error fetching user modules:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -98,7 +101,6 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({ enabledModules: data.enabled_modules });
   } catch (error) {
-    console.error('Error updating user modules:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

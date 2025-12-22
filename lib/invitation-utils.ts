@@ -44,10 +44,12 @@ export async function generateShortCode(): Promise<string> {
 
 /**
  * Generate registration link with short code
+ * @param shortCode - The invitation short code
+ * @param baseUrl - Optional base URL. If not provided, falls back to environment variables or localhost
  */
-export function generateRegistrationLink(shortCode: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:3008';
-  return `${baseUrl}/register?invite=${shortCode}`;
+export function generateRegistrationLink(shortCode: string, baseUrl?: string): string {
+  const url = baseUrl || process.env.NEXT_PUBLIC_FRONTEND_URL || process.env.FRONTEND_URL || 'http://localhost:3008';
+  return `${url}/register?invite=${shortCode}`;
 }
 
 

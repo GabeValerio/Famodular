@@ -46,7 +46,6 @@ export async function GET(
       .order('photo_date', { ascending: false });
 
     if (error) {
-      console.error('Supabase query error:', error);
       if (error.code === '42P01' || error.code === 'PGRST116' || error.message?.includes('does not exist')) {
         return NextResponse.json(
           { error: 'Plant photos table does not exist. Please run the migration: docs/migrations/create_plants_tables.sql' },
@@ -133,7 +132,6 @@ export async function POST(
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       if (error.code === '42P01' || error.code === 'PGRST116' || error.message?.includes('does not exist')) {
         return NextResponse.json(
           { error: 'Plant photos table does not exist. Please run the migration: docs/migrations/create_plants_tables.sql' },

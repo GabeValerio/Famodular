@@ -44,7 +44,6 @@ export async function GET(request: NextRequest) {
       .order('photo_date', { foreignTable: 'plant_photos', ascending: false });
 
     if (error) {
-      console.error('Supabase query error:', error);
       if (error.code === '42P01' || error.code === 'PGRST116' || error.message?.includes('does not exist')) {
         return NextResponse.json(
           { error: 'Plants table does not exist. Please run the migration: docs/migrations/create_plants_tables.sql' },
@@ -76,7 +75,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(plantsWithDates);
   } catch (error) {
-    console.error('Plants API Error:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
@@ -136,7 +134,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       if (error.code === '42P01' || error.code === 'PGRST116' || error.message?.includes('does not exist')) {
         return NextResponse.json(
           { error: 'Plants table does not exist. Please run the migration: docs/migrations/create_plants_tables.sql' },

@@ -122,7 +122,6 @@ export async function POST(req: NextRequest) {
         });
 
       if (memberError) {
-        console.error('Error adding user to group:', memberError);
         // User is created, but group membership failed - still return success
         // but log the error for manual fix if needed
       } else {
@@ -147,7 +146,6 @@ export async function POST(req: NextRequest) {
 
     return new Response(JSON.stringify(response), { status: 201 });
   } catch (err) {
-    console.error('Registration error:', err);
     return new Response(
       JSON.stringify({ error: "An unexpected error occurred during registration." }),
       { status: 500 }

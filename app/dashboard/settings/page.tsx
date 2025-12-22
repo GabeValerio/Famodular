@@ -57,6 +57,7 @@ export default function SettingsPage() {
     calendar: true,
     todos: true,
     plants: false,
+    taskplanner: true,
   });
   const [personalUploading, setPersonalUploading] = useState(false);
   const [savingUserModules, setSavingUserModules] = useState(false);
@@ -119,7 +120,6 @@ export default function SettingsPage() {
           setIsGroupAdmin(false);
         }
       } catch (error) {
-        console.error('Error checking group admin status:', error);
         setIsGroupAdmin(false);
       }
     };
@@ -210,16 +210,13 @@ export default function SettingsPage() {
           await refreshUser();
           // Success is silent - the image preview updates automatically
         } catch (saveError) {
-          console.error('Error saving avatar:', saveError);
           // Don't throw - the upload succeeded, just the save failed
           alert('Image uploaded but failed to save. Please try saving manually.');
         }
       } else {
-        console.error('Upload response missing URL:', data);
         throw new Error(data.error || 'Upload failed - no URL returned');
       }
     } catch (error) {
-      console.error('Upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
       alert(`Upload failed: ${errorMessage}`);
     } finally {
@@ -296,19 +293,15 @@ export default function SettingsPage() {
 
             // Success is silent - the image preview updates automatically
           } catch (saveError) {
-            console.error('Error saving group avatar:', saveError);
             // Don't throw - the upload succeeded, just the save failed
             alert('Image uploaded but failed to save. Please try saving manually.');
           }
         } else {
-          console.warn('No group selected - avatar will be saved when group settings are saved');
         }
       } else {
-        console.error('Upload response missing URL:', data);
         throw new Error(data.error || 'Upload failed - no URL returned');
       }
     } catch (error) {
-      console.error('Upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
       alert(`Upload failed: ${errorMessage}`);
     } finally {
@@ -345,7 +338,6 @@ export default function SettingsPage() {
       await refreshUser();
       alert('Personal settings saved successfully!');
     } catch (error) {
-      console.error('Error saving personal settings:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save personal settings';
       alert(`Save failed: ${errorMessage}`);
     }
@@ -374,7 +366,6 @@ export default function SettingsPage() {
       
       alert('User modules saved successfully!');
     } catch (error) {
-      console.error('Error saving user modules:', error);
       alert(`Failed to save user modules: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setSavingUserModules(false);
@@ -407,7 +398,6 @@ export default function SettingsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        console.error('Save failed:', error);
         throw new Error(error.error || 'Failed to save group settings');
       }
 
@@ -426,7 +416,6 @@ export default function SettingsPage() {
       
       alert('Group settings saved successfully!');
     } catch (error) {
-      console.error('Error saving group settings:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save group settings. Please try again.';
       alert(`Save failed: ${errorMessage}`);
     } finally {
@@ -480,7 +469,6 @@ export default function SettingsPage() {
       
       // Stay on groups tab
     } catch (error) {
-      console.error('Error creating group:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to create group. Please try again.';
       alert(errorMessage);
     } finally {
@@ -524,11 +512,9 @@ export default function SettingsPage() {
         const imageUrl = data.data.url;
         setNewGroup(prev => ({ ...prev, avatar: imageUrl }));
       } else {
-        console.error('Upload response missing URL:', data);
         throw new Error(data.error || 'Upload failed - no URL returned');
       }
     } catch (error) {
-      console.error('Upload error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
       alert(`Upload failed: ${errorMessage}`);
     } finally {

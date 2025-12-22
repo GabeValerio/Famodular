@@ -3,6 +3,21 @@ import { getSupabaseServerClient } from '@/lib/supabaseClient';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
+// Helper functions to map between todos (category) and tasks (type)
+const typeToCategory = (type: string | undefined): string => {
+  if (type === 'personal' || type === 'work' || type === 'group') {
+    return type;
+  }
+  return 'personal';
+};
+
+const intPriorityToText = (priority: number | undefined): string => {
+  if (priority === 1) return 'high';
+  if (priority === 2) return 'medium';
+  if (priority === 3) return 'low';
+  return 'medium';
+};
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -18,9 +33,9 @@ export async function PATCH(
     // Use server client (bypasses RLS)
     const supabase = getSupabaseServerClient();
     
-    // Verify user owns this todo
+    // Verify user owns this todo (now in tasks table)
     const { data: existingTodo, error: fetchError } = await supabase
-      .from('todos')
+      .from('tasks')
       .select('*')
       .eq('id', id)
       .eq('user_id', session.user.id)
@@ -31,10 +46,12 @@ export async function PATCH(
     }
 
     // Toggle completed status
+    const newCompletedStatus = !existingTodo.completed;
     const { data: todo, error } = await supabase
-      .from('todos')
+      .from('tasks')
       .update({
-        completed: !existingTodo.completed,
+        completed: newCompletedStatus,
+        completed_at: newCompletedStatus ? new Date().toISOString() : null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)
@@ -45,13 +62,14 @@ export async function PATCH(
     if (error) throw error;
 
     // Convert date strings to Date objects and map snake_case to camelCase
+    // Map type back to category and integer priority to text for backward compatibility
     const todoWithDates = {
       id: todo.id,
-      title: todo.title,
+      title: todo.title || todo.text,
       description: todo.description,
       completed: todo.completed,
-      category: todo.category,
-      priority: todo.priority,
+      category: typeToCategory(todo.type), // Map type to category
+      priority: intPriorityToText(todo.priority), // Convert integer priority to text
       userId: todo.user_id,
       groupId: todo.group_id,
       projectId: todo.project_id,

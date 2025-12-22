@@ -13,7 +13,6 @@ export async function POST(request: NextRequest) {
 
     // Check Cloudinary configuration
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      console.error('Cloudinary configuration missing');
       return NextResponse.json(
         { error: 'File upload service is not configured. Please contact support.' },
         { status: 500 }
@@ -65,7 +64,6 @@ export async function POST(request: NextRequest) {
       data: result,
     });
   } catch (error: any) {
-    console.error('Upload error:', error);
     
     // Provide more specific error messages
     let errorMessage = 'Upload failed';

@@ -32,7 +32,6 @@ export function getSupabaseServerClient() {
     
     if (!serviceRoleKey) {
         // Fallback to anon key if service role key is not set (for development)
-        console.warn('SUPABASE_SERVICE_ROLE_KEY not set, using anon key. RLS policies may block operations.');
         return supabase;
     }
     

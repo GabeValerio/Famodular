@@ -26,7 +26,6 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
 
   const handleAdd = async () => {
     if (!groupId) {
-      console.error('No group ID available');
       return;
     }
 

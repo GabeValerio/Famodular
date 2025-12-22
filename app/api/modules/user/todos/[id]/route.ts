@@ -3,6 +3,38 @@ import { getSupabaseServerClient } from '@/lib/supabaseClient';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 
+// Helper functions to map between todos (category) and tasks (type)
+const categoryToType = (category: string): string => {
+  if (category === 'personal' || category === 'work' || category === 'group') {
+    return category;
+  }
+  return 'personal';
+};
+
+const typeToCategory = (type: string | undefined): string => {
+  if (type === 'personal' || type === 'work' || type === 'group') {
+    return type;
+  }
+  return 'personal';
+};
+
+const textPriorityToInt = (priority: string | number | undefined): number => {
+  if (typeof priority === 'number') return priority;
+  if (typeof priority === 'string') {
+    if (priority === 'high') return 1;
+    if (priority === 'medium') return 2;
+    if (priority === 'low') return 3;
+  }
+  return 0;
+};
+
+const intPriorityToText = (priority: number | undefined): string => {
+  if (priority === 1) return 'high';
+  if (priority === 2) return 'medium';
+  if (priority === 3) return 'low';
+  return 'medium';
+};
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -19,9 +51,9 @@ export async function PATCH(
     // Use server client (bypasses RLS)
     const supabase = getSupabaseServerClient();
     
-    // Verify user owns this todo
+    // Verify user owns this todo (now in tasks table)
     const { data: existingTodo, error: fetchError } = await supabase
-      .from('todos')
+      .from('tasks')
       .select('*')
       .eq('id', id)
       .eq('user_id', session.user.id)
@@ -36,11 +68,17 @@ export async function PATCH(
       updated_at: new Date().toISOString(),
     };
 
-    if (body.title !== undefined) updates.title = body.title;
+    if (body.title !== undefined) {
+      updates.title = body.title;
+      updates.text = body.title; // Also update text for compatibility
+    }
     if (body.description !== undefined) updates.description = body.description || null;
-    if (body.category !== undefined) updates.category = body.category;
-    if (body.priority !== undefined) updates.priority = body.priority;
-    if (body.completed !== undefined) updates.completed = body.completed;
+    if (body.category !== undefined) updates.type = categoryToType(body.category); // Map category to type
+    if (body.priority !== undefined) updates.priority = textPriorityToInt(body.priority); // Convert text priority to integer
+    if (body.completed !== undefined) {
+      updates.completed = body.completed;
+      updates.completed_at = body.completed ? new Date().toISOString() : null;
+    }
     if (body.dueDate !== undefined) {
       updates.due_date = body.dueDate ? new Date(body.dueDate).toISOString() : null;
     }
@@ -64,7 +102,8 @@ export async function PATCH(
     }
 
     // If category is being changed to 'group', verify groupId is provided
-    if (body.category === 'group' && !existingTodo.group_id && !body.groupId) {
+    const newCategory = body.category || typeToCategory(existingTodo.type);
+    if (newCategory === 'group' && !existingTodo.group_id && !body.groupId) {
       return NextResponse.json({ error: 'groupId is required for group todos' }, { status: 400 });
     }
 
@@ -88,7 +127,7 @@ export async function PATCH(
     }
 
     const { data: todo, error } = await supabase
-      .from('todos')
+      .from('tasks')
       .update(updates)
       .eq('id', id)
       .eq('user_id', session.user.id)
@@ -98,13 +137,14 @@ export async function PATCH(
     if (error) throw error;
 
     // Convert date strings to Date objects and map snake_case to camelCase
+    // Map type back to category and integer priority to text for backward compatibility
     const todoWithDates = {
       id: todo.id,
-      title: todo.title,
+      title: todo.title || todo.text,
       description: todo.description,
       completed: todo.completed,
-      category: todo.category,
-      priority: todo.priority,
+      category: typeToCategory(todo.type), // Map type to category
+      priority: intPriorityToText(todo.priority), // Convert integer priority to text
       userId: todo.user_id,
       groupId: todo.group_id,
       projectId: todo.project_id,
@@ -137,9 +177,9 @@ export async function DELETE(
     // Use server client (bypasses RLS)
     const supabase = getSupabaseServerClient();
     
-    // Verify user owns this todo
+    // Verify user owns this todo (now in tasks table)
     const { data: existingTodo, error: fetchError } = await supabase
-      .from('todos')
+      .from('tasks')
       .select('*')
       .eq('id', id)
       .eq('user_id', session.user.id)
@@ -150,7 +190,7 @@ export async function DELETE(
     }
 
     const { error } = await supabase
-      .from('todos')
+      .from('tasks')
       .delete()
       .eq('id', id)
       .eq('user_id', session.user.id);

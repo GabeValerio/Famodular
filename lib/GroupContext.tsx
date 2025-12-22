@@ -52,7 +52,6 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       setGroups(fetchedGroups);
       return fetchedGroups;
     } catch (error) {
-      console.error('Error fetching groups:', error);
       setGroups([]);
       return [];
     }
@@ -91,7 +90,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           userPhone = profile.phone;
         }
       } else {
-        console.warn('GroupContext - Failed to fetch user profile:', profileResponse?.status);
+        // Failed to fetch user profile
       }
 
       const userData: User = {
@@ -125,7 +124,6 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       setCurrentUser(userData);
       return userData;
     } catch (error) {
-      console.error('Error fetching user:', error);
       // Set basic user data from session if fetch fails
       const fallbackUser = {
         id: session.user.id,

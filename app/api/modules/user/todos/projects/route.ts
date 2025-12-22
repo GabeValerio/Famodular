@@ -11,7 +11,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!session.user?.id) {
-      console.error('Session user ID is missing');
       return NextResponse.json({ error: 'User ID not found in session' }, { status: 401 });
     }
 
@@ -24,35 +23,47 @@ export async function GET(request: NextRequest) {
     // Build query using server client (bypasses RLS)
     const supabase = getSupabaseServerClient();
     
+    // CRITICAL: For group view, verify user is a member of the group
+    if (groupId) {
+      const { data: groupMember } = await supabase
+        .from('group_members')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('user_id', session.user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (!groupMember) {
+        return NextResponse.json({ error: 'Forbidden: Not a member of this group' }, { status: 403 });
+      }
+    }
+    
     // CRITICAL: Filter projects by group_id for data isolation
-    // Self view (groupId = null): Only projects with group_id IS NULL
-    // Group view (groupId = UUID): Only projects with group_id = groupId
+    // Self view (groupId = null): Only projects with group_id IS NULL for current user
+    // Group view (groupId = UUID): Show ALL projects for this specific group (regardless of creator)
     let query = supabase
       .from('projects')
-      .select('*')
-      .eq('user_id', session.user.id);
+      .select('*');
     
     if (groupId) {
-      // Group view: Only projects for this specific group
+      // Group view: Show ALL projects for this specific group (NO user_id filter)
       query = query.eq('group_id', groupId);
     } else {
-      // Self view: Only personal projects (group_id IS NULL)
-      query = query.is('group_id', null);
+      // Self view: Only personal projects (group_id IS NULL) for current user
+      query = query.eq('user_id', session.user.id).is('group_id', null);
     }
     
     const { data: projects, error } = await query.order('created_at', { ascending: false });
 
     // If table doesn't exist yet, return empty array (graceful degradation)
     if (error) {
-      console.error('Supabase query error:', error);
       if (
-        error.code === '42P01' || 
+        error.code === '42P01' ||
         error.code === 'PGRST116' ||
         error.message?.includes('does not exist') ||
         error.message?.includes('relation') ||
         error.message?.includes('Could not find a relationship')
       ) {
-        console.warn('Projects table does not exist, returning empty array');
         return NextResponse.json([]);
       }
       throw error;
@@ -72,7 +83,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(projectsWithDates);
   } catch (error) {
-    console.error('Projects API Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
     const errorDetails = error instanceof Error ? { 
       message: errorMessage,
@@ -141,7 +151,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Supabase error:', error);
       if (error.code === '42P01' || error.message?.includes('does not exist') || error.message?.includes('relation') || error.code === 'PGRST116') {
         return NextResponse.json(
           { error: 'Projects table does not exist. Please create the projects table in your database. See docs/TODOS_MODULE_SCHEMA.md for the SQL schema.' },

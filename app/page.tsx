@@ -8,7 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { ShoppingCart, User, Calendar, CheckSquare, Target, MessageSquare, DollarSign, MapPin, Leaf, Heart } from 'lucide-react';
 import CartDrawer from '@/app/components/CartDrawer';
 import { useCart } from '@/lib/CartContext';
-import { Footer } from '@/app/Footer';
 
 export default function HomePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -27,7 +26,7 @@ export default function HomePage() {
             setUserAvatar(user.avatar || null);
           }
         } catch (error) {
-          console.error('Error fetching user avatar:', error);
+          // Error fetching user avatar
         }
       } else {
         setUserAvatar(null);
@@ -252,9 +251,6 @@ export default function HomePage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <Footer />
 
       {/* Cart Drawer */}
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />

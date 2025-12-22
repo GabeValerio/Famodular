@@ -183,7 +183,6 @@ export function PlantsComponent({
               photoDate: new Date(),
             });
           } catch (photoError) {
-            console.error('Error adding photo to new plant:', photoError);
             // Don't fail the whole operation if photo add fails
           }
           setPendingPhotoUrl(null);
@@ -191,7 +190,6 @@ export function PlantsComponent({
       }
       handleCloseModal();
     } catch (error) {
-      console.error('Error saving plant:', error);
     }
   };
 
@@ -203,7 +201,6 @@ export function PlantsComponent({
         try {
           fileToUpload = await compressImage(file);
         } catch (compressError) {
-          console.warn('Image compression failed, trying original file:', compressError);
         }
       }
 
@@ -273,7 +270,6 @@ export function PlantsComponent({
         });
       }
     } catch (error) {
-      console.error('Error handling image:', error);
       alert(error instanceof Error ? error.message : 'Failed to upload image. Please try again.');
     }
   };
@@ -295,7 +291,6 @@ export function PlantsComponent({
         waterAmount: identification.waterAmount,
       }));
     } catch (error) {
-      console.error('AI identification failed:', error);
       alert('Failed to identify plant. Please enter the information manually.');
     } finally {
       setIdentifying(false);
@@ -330,7 +325,6 @@ export function PlantsComponent({
         try {
           fileToUpload = await compressImage(file);
         } catch (compressError) {
-          console.warn('Image compression failed, trying original file:', compressError);
         }
       }
 
@@ -363,7 +357,6 @@ export function PlantsComponent({
         photoDate: new Date(),
       });
     } catch (error) {
-      console.error('Error adding photo:', error);
       alert(error instanceof Error ? error.message : 'Failed to add photo. Please try again.');
     }
   };

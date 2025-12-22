@@ -31,7 +31,6 @@ export const analyzeCheckIns = async (checkIns: CheckIn[], members: FamilyMember
 
     return `The family seems mostly ${dominantMood.toLowerCase()}. Consider planning a relaxing family activity to boost everyone's spirits.`;
   } catch (error) {
-    console.error("Error analyzing check-ins:", error);
     return "Unable to analyze check-ins at the moment.";
   }
 };
@@ -45,7 +44,6 @@ export const getChatResponse = async (messages: Message[], members: FamilyMember
     }
     return "Thanks for sharing! How else can I support your family?";
   } catch (error) {
-    console.error("Error getting chat response:", error);
     return "Sorry, I'm having trouble connecting right now.";
   }
 };

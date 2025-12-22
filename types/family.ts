@@ -39,6 +39,7 @@ export interface ModuleConfig {
   calendar: boolean;
   todos: boolean;
   plants: boolean;
+  taskplanner: boolean;
 }
 
 // Alias for backward compatibility

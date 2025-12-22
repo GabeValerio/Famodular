@@ -34,7 +34,6 @@ export async function POST(request: NextRequest) {
       paymentIntentId: paymentIntent.id,
     });
   } catch (error: any) {
-    console.error('Error creating payment intent:', error);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }

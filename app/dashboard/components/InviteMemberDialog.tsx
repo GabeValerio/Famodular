@@ -61,7 +61,6 @@ export function InviteMemberDialog({ open, onOpenChange, groupId, groupName }: I
       setRegistrationLink(data.registration_link);
       setInvitationId(data.invitation.id);
     } catch (err) {
-      console.error('Error creating invitation:', err);
       setError(err instanceof Error ? err.message : 'Failed to create invitation. Please try again.');
     } finally {
       setIsLoading(false);
@@ -74,7 +73,6 @@ export function InviteMemberDialog({ open, onOpenChange, groupId, groupName }: I
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Failed to copy link:', err);
     }
   };
 
