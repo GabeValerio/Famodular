@@ -118,6 +118,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           plants: false,
           calendar: true,
           todos: true,
+          taskplanner: false,
         };
       }
 
