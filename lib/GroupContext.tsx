@@ -142,6 +142,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           plants: true,
           calendar: true,
           todos: true,
+          taskplanner: true,
         },
       } as User;
       setCurrentUser(fallbackUser);
