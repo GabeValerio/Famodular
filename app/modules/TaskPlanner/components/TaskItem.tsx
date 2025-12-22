@@ -112,8 +112,6 @@ export default function TaskItem({
   const handleDelete = (taskId: string) => {
     if (onTaskDelete) {
       onTaskDelete(taskId);
-    } else if (onDelete) {
-      onDelete(taskId);
     }
   };
   
