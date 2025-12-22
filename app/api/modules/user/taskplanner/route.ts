@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Order by priority ascending (1 first), then by due_date, then by created_at
-    query = query.order('priority', { ascending: true, nullsLast: true })
-                 .order('due_date', { ascending: true, nullsLast: true })
+    query = query.order('priority', { ascending: true, nullsFirst: false })
+                 .order('due_date', { ascending: true, nullsFirst: false })
                  .order('created_at', { ascending: false });
 
     const { data: tasks, error } = await query;

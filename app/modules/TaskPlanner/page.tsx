@@ -1,1 +1,1 @@
-export { TaskPlannerPage as default } from './pages/TaskPlannerPage';
+export { default } from './pages/TaskPlannerPage';
