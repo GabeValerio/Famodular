@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { Plus, Calendar, Settings, Target, CheckCircle2, Clock, User, DollarSign, Zap, Music, Bug, Book, Home, Car, AlertCircle } from 'lucide-react';
+import { Plus, Calendar, Settings, Target, CheckCircle2, Clock, User, DollarSign, Zap, Music, Bug, Book, Home, Car, AlertCircle, Briefcase } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/app/components/ui/sheet";
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import TaskList from '../components/TaskList';
 import WeeklyView from '../components/WeeklyView';
+import PlanView from '../components/PlanView';
 import AllTasksView from '../components/AllTasksView';
 import AllGoalsView from '../components/AllGoalsView';
 import GoalsListView from '../components/GoalsListView';
@@ -44,10 +45,11 @@ export default function TaskPlannerPage() {
   const [selectedTimezone, setSelectedTimezone] = useState('America/New_York');
   
   // View and filter state
-  const [currentView, setCurrentView] = useState<'All Tasks' | 'All Goals' | 'Goals List' | 'Weekly'>('Weekly');
+  const [currentView, setCurrentView] = useState<'All Tasks' | 'All Goals' | 'Goals List' | 'Weekly' | 'Plan'>('Weekly');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<string>('All');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('All Types');
   const [currentWeek, setCurrentWeek] = useState<Date>(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(new Date(2026, 0, 1)); // Start from January 2026
   const [taskDateToAdd, setTaskDateToAdd] = useState<Date | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
 
@@ -234,7 +236,8 @@ export default function TaskPlannerPage() {
     newType: string, 
     newDueDate?: Date | null, 
     newGoalId?: string, 
-    newImageUrl?: string | null
+    newImageUrl?: string | null,
+    newParentId?: string | null
   ) => {
     await updateTask(taskId, {
       title: newText,
@@ -243,6 +246,7 @@ export default function TaskPlannerPage() {
       dueDate: newDueDate || null,
       goalId: newGoalId || null,
       imageUrl: newImageUrl || null,
+      parentId: newParentId || null,
     });
   }, [updateTask]);
 
@@ -260,6 +264,21 @@ export default function TaskPlannerPage() {
   const handleUpdateException = useCallback(async (taskId: string, isException: boolean) => {
     // This can be implemented later if needed
   }, []);
+
+  // Handler for adding a subtask
+  const handleAddSubtask = useCallback((parentTaskId: string) => {
+    const parentTask = tasks.find(t => t.id === parentTaskId);
+    if (parentTask) {
+      // Pre-fill the form with parent task info
+      setNewTask({
+        ...initialNewTask,
+        parent_id: parentTaskId,
+        goal_id: (parentTask.goalId || parentTask.goal_id) || null,
+        type: parentTask.type || 'personal',
+      });
+      setIsAddingTask(true);
+    }
+  }, [tasks, initialNewTask]);
 
   const handleAddTaskForDate = useCallback((date: Date) => {
     setTaskDateToAdd(date);
@@ -282,6 +301,22 @@ export default function TaskPlannerPage() {
 
   const handleWeekChange = useCallback((date: Date) => {
     setCurrentWeek(date);
+  }, []);
+
+  const handlePreviousPeriod = useCallback(() => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() - 1);
+    setCurrentDate(newDate);
+  }, [currentDate]);
+
+  const handleNextPeriod = useCallback(() => {
+    const newDate = new Date(currentDate);
+    newDate.setMonth(newDate.getMonth() + 1);
+    setCurrentDate(newDate);
+  }, [currentDate]);
+
+  const handlePeriodChange = useCallback((date: Date) => {
+    setCurrentDate(date);
   }, []);
 
   // Statistics calculations
@@ -436,6 +471,32 @@ export default function TaskPlannerPage() {
             setSelectedTask={setSelectedTask}
             onTaskToggle={handleTaskToggle}
             onTaskDelete={handleTaskDelete}
+            onAddSubtask={handleAddSubtask}
+            selectedTimezone={selectedTimezone}
+            selectedStatusFilter={selectedStatusFilter}
+            selectedTypeFilter={selectedTypeFilter}
+            onStatusFilterChange={setSelectedStatusFilter}
+            onTypeFilterChange={setSelectedTypeFilter}
+            handlePriorityUpdate={handlePriorityUpdate}
+            handleUpdateTask={handleUpdateTask}
+            handleUpdateTime={handleUpdateTime}
+            handleUpdateException={handleUpdateException}
+          />
+        )}
+
+        {/* Main Content - Plan View */}
+        {currentView === 'Plan' && (
+          <PlanView
+            currentDate={currentDate}
+            tasks={tasks}
+            onPreviousPeriod={handlePreviousPeriod}
+            onNextPeriod={handleNextPeriod}
+            onPeriodChange={handlePeriodChange}
+            onAddTask={handleAddTaskForDate}
+            selectedTask={selectedTask}
+            setSelectedTask={setSelectedTask}
+            onTaskToggle={handleTaskToggle}
+            onTaskDelete={handleTaskDelete}
             selectedTimezone={selectedTimezone}
             selectedStatusFilter={selectedStatusFilter}
             selectedTypeFilter={selectedTypeFilter}
@@ -462,6 +523,7 @@ export default function TaskPlannerPage() {
               setSelectedTask(task);
               // For now, we can use handleUpdateTask when user edits inline
             }}
+            onAddSubtask={handleAddSubtask}
             selectedTimezone={selectedTimezone}
             selectedStatusFilter={selectedStatusFilter}
             selectedTypeFilter={selectedTypeFilter}
@@ -483,7 +545,10 @@ export default function TaskPlannerPage() {
             onTaskEdit={(task) => {
               setSelectedTask(task);
             }}
+            onAddSubtask={handleAddSubtask}
             selectedTimezone={selectedTimezone}
+            handleUpdateTask={handleUpdateTask}
+            handleUpdateTime={handleUpdateTime}
           />
         )}
 
@@ -505,6 +570,7 @@ export default function TaskPlannerPage() {
               setNewTask({ ...initialNewTask, goal_id: goalId });
               setIsAddingTask(true);
             }}
+            onAddSubtask={handleAddSubtask}
             selectedTimezone={selectedTimezone}
           />
         )}
@@ -554,7 +620,7 @@ export default function TaskPlannerPage() {
               <div>
                 <h3 className="text-sm font-semibold mb-3">View</h3>
                 <div className="flex flex-wrap gap-2">
-                  {['All Tasks', 'All Goals', 'Goals List', 'Weekly'].map((view) => (
+                  {['All Tasks', 'All Goals', 'Goals List', 'Weekly', 'Plan'].map((view) => (
                     <Button
                       key={view}
                       variant={currentView === view ? 'default' : 'outline'}
@@ -569,25 +635,24 @@ export default function TaskPlannerPage() {
                           : 'bg-white hover:bg-gray-50'
                       }`}
                     >
-                      {view === 'Weekly' && <Calendar className="w-4 h-4 mr-2" />}
                       {view}
                     </Button>
                   ))}
                 </div>
               </div>
 
-              {/* Status Filters - Only show for Weekly view */}
-              {currentView === 'Weekly' && (
+              {/* Status Filters - Only show for Weekly and Plan views */}
+              {(currentView === 'Weekly' || currentView === 'Plan') && (
                 <div>
                   <h3 className="text-sm font-semibold mb-3">Status</h3>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { id: 'All', label: 'All', icon: null },
-                      { id: 'Completed', label: 'Completed', icon: CheckCircle2 },
-                      { id: 'In Progress', label: 'In Progress', icon: AlertCircle },
-                      { id: 'Overdue', label: 'Overdue', icon: Clock },
+                      { id: 'Completed', label: 'Completed', icon: null },
+                      { id: 'In Progress', label: 'In Progress', icon: null },
+                      { id: 'Overdue', label: 'Overdue', icon: null },
                     ].map((filter) => {
-                      const Icon = filter.icon;
+                      const Icon = filter.icon as React.ComponentType<{ className?: string }> | null;
                       return (
                         <Button
                           key={filter.id}
@@ -609,14 +674,15 @@ export default function TaskPlannerPage() {
                 </div>
               )}
 
-              {/* Type Filters - Only show for Weekly view */}
-              {currentView === 'Weekly' && (
+              {/* Type Filters - Only show for Weekly and Plan views */}
+              {(currentView === 'Weekly' || currentView === 'Plan') && (
                 <div>
                   <h3 className="text-sm font-semibold mb-3">Type</h3>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { id: 'All Types', label: 'All Types', icon: null },
                       { id: 'personal', label: 'Personal', icon: User },
+                      { id: 'work', label: 'Work', icon: Briefcase },
                       { id: 'finance', label: 'Finance', icon: DollarSign },
                       { id: 'quick', label: 'Quick', icon: Zap },
                       { id: 'music', label: 'Music', icon: Music },
@@ -626,7 +692,7 @@ export default function TaskPlannerPage() {
                       { id: 'home', label: 'Home', icon: Home },
                       { id: 'roadtrip', label: 'Roadtrip', icon: Car },
                     ].map((filter) => {
-                      const Icon = filter.icon;
+                      const Icon = filter.icon as React.ComponentType<{ className?: string }> | null;
                       const taskTypeConfig = filter.id !== 'All Types' ? TASK_TYPES[filter.id.toUpperCase()] : null;
                       return (
                         <Button

@@ -40,6 +40,7 @@ export interface ModuleConfig {
   todos: boolean;
   plants: boolean;
   taskplanner: boolean;
+  notepad: boolean;
 }
 
 // Alias for backward compatibility
@@ -153,6 +154,14 @@ export interface User {
   groups: GroupMember[]; // Groups this user belongs to
   enabledModules?: UserModules; // Module configuration for self view
   defaultView?: 'self' | string; // 'self' or groupId
+  instagram?: string;
+  x_twitter?: string;
+  facebook?: string;
+  linkedin?: string;
+  tiktok?: string;
+  youtube?: string;
+  github?: string;
+  website?: string;
 }
 
 export interface FamilyMember {

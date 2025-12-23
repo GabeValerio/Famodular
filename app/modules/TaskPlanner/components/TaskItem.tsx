@@ -21,7 +21,7 @@ export interface TaskItemProps {
   onMoveDown?: (taskId: string) => void;
   isPriorityEditMode?: boolean;
   handlePriorityUpdate?: (taskId: string, newPriority: number) => Promise<void>;
-  handleUpdateTask?: (taskId: string, newText: string, newType: string, newDueDate?: Date | null, newGoalId?: string, newImageUrl?: string | null) => Promise<void>;
+  handleUpdateTask?: (taskId: string, newText: string, newType: string, newDueDate?: Date | null, newGoalId?: string, newImageUrl?: string | null, newParentId?: string | null) => Promise<void>;
   onTaskEdit?: (task: Task) => void; // For TaskCard compatibility - opens edit mode
   isExpanded?: boolean;
   onToggleExpand?: (taskId: string) => void;
@@ -93,6 +93,7 @@ export default function TaskItem({
   onAddSubtask,
   onTaskToggle,
   onTaskDelete,
+  onDelete,
   taskCompletions = [],
   selectedTimezone,
   compact = false,
@@ -112,6 +113,8 @@ export default function TaskItem({
   const handleDelete = (taskId: string) => {
     if (onTaskDelete) {
       onTaskDelete(taskId);
+    } else if (onDelete) {
+      onDelete(taskId);
     }
   };
   
@@ -130,8 +133,37 @@ export default function TaskItem({
     return goal?.goal || goal?.text || '';
   };
   
+  // Get valid parent tasks (exclude current task and its descendants to prevent circular references)
+  const getValidParentTasks = (): Task[] => {
+    const excludeIds = new Set<string>([task.id]);
+    
+    // Recursively find all descendant task IDs
+    const findDescendants = (parentId: string) => {
+      const children = tasks.filter(t => {
+        const pid = t.parentId || t.parent_id;
+        return pid === parentId;
+      });
+      children.forEach(child => {
+        excludeIds.add(child.id);
+        findDescendants(child.id);
+      });
+    };
+    
+    findDescendants(task.id);
+    
+    // Return tasks that are not in the exclude list and don't already have a parent
+    return tasks
+      .filter(t => !excludeIds.has(t.id))
+      .sort((a, b) => {
+        const textA = a.text || a.title || '';
+        const textB = b.text || b.title || '';
+        return textA.localeCompare(textB);
+      });
+  };
+  
   const goalId = task.goalId || task.goal_id;
   const goalName = showGoalLabel ? getGoalName(goalId) : '';
+  const validParentTasks = getValidParentTasks();
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [priorityInput, setPriorityInput] = useState(() => task.priority?.toString() || '0');
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
@@ -143,6 +175,9 @@ export default function TaskItem({
   });
   const [editingGoalId, setEditingGoalId] = useState<string>(() => {
     return task.goalId || task.goal_id || '';
+  });
+  const [editingParentId, setEditingParentId] = useState<string>(() => {
+    return task.parentId || task.parent_id || '';
   });
   const [editingEstimatedTime, setEditingEstimatedTime] = useState<number | null>(() => {
     return task.estimatedTime || task.estimated_time || null;
@@ -165,7 +200,7 @@ export default function TaskItem({
     ? (isCompleted ? '#F9FAFB' : '#F3E8FF') // purple-50 for compact mode
     : (isCompleted ? '#F9FAFB' : TASK_TYPES[taskType]?.bgColor || '#FFFFFF');
 
-  const handleTaskUpdate = async (taskId: string, newText: string, newType: string, newDueDate?: Date | null, newGoalId?: string, newImageUrl?: string | null) => {
+  const handleTaskUpdate = async (taskId: string, newText: string, newType: string, newDueDate?: Date | null, newGoalId?: string, newImageUrl?: string | null, newParentId?: string | null) => {
     try {
       const formattedDate = newDueDate
         ? new Date(newDueDate.toISOString().split('T')[0] + 'T12:00:00Z')
@@ -178,7 +213,8 @@ export default function TaskItem({
           newType,
           formattedDate,
           newGoalId,
-          newImageUrl
+          newImageUrl,
+          newParentId || null
         );
       }
 
@@ -194,6 +230,7 @@ export default function TaskItem({
       setEditingType('');
       setEditingDueDate(null);
       setEditingGoalId('');
+      setEditingParentId('');
       setEditingEstimatedTime(null);
       setEditingCompletedTime(null);
     } catch (error) {
@@ -281,6 +318,7 @@ export default function TaskItem({
       const dueDate = task.dueDate || task.due_date;
       setEditingDueDate(dueDate ? new Date(dueDate as string) : null);
       setEditingGoalId(task.goalId || task.goal_id || '');
+      setEditingParentId(task.parentId || task.parent_id || '');
       setEditingEstimatedTime(task.estimatedTime || task.estimated_time || null);
       setEditingCompletedTime(task.completedTime || task.completed_time || null);
     }
@@ -354,7 +392,8 @@ export default function TaskItem({
                     editingType,
                     editingDueDate,
                     editingGoalId,
-                    null
+                    null,
+                    editingParentId || null
                   );
                 }}
                 onClick={(e) => e.stopPropagation()}
@@ -422,7 +461,7 @@ export default function TaskItem({
                             }
 
                             const data = await response.json();
-                            await handleTaskUpdate(task.id, editingText, editingType, editingDueDate, editingGoalId, data.secure_url);
+                            await handleTaskUpdate(task.id, editingText, editingType, editingDueDate, editingGoalId, data.secure_url, editingParentId || null);
                           } catch (error) {
                           }
                         }}
@@ -447,7 +486,7 @@ export default function TaskItem({
                           <button
                             type="button"
                             onClick={async () => {
-                              await handleTaskUpdate(task.id, editingText, editingType, editingDueDate, editingGoalId, null);
+                              await handleTaskUpdate(task.id, editingText, editingType, editingDueDate, editingGoalId, null, editingParentId || null);
                             }}
                             className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                           >
@@ -468,6 +507,20 @@ export default function TaskItem({
                     {goals.map((goal) => (
                       <option key={goal.id} value={goal.id}>
                         {goal.goal || goal.text}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Parent Task Selector */}
+                  <select
+                    value={editingParentId}
+                    onChange={(e) => setEditingParentId(e.target.value)}
+                    className="w-full sm:flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm"
+                  >
+                    <option value="">No Parent Task</option>
+                    {validParentTasks.map((parentTask) => (
+                      <option key={parentTask.id} value={parentTask.id}>
+                        {parentTask.text || parentTask.title}
                       </option>
                     ))}
                   </select>
@@ -516,6 +569,7 @@ export default function TaskItem({
                       setEditingType('');
                       setEditingDueDate(null);
                       setEditingGoalId('');
+                      setEditingParentId('');
                       setEditingEstimatedTime(null);
                       setEditingCompletedTime(null);
                     }}

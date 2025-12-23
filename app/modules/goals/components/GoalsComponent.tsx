@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FamilyMember, Goal, GoalType, Timeframe } from '@/types/family';
-import { Target, Plus, Trash2, CheckCircle2, Filter } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 interface GoalsComponentProps {
   goals: Goal[];
@@ -16,8 +16,6 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
   // Get the groupId from the group prop
   const groupId = group?.id;
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [timeframeFilter, setTimeframeFilter] = useState<'all' | 'one-year'>('all');
-  const [memberFilter, setMemberFilter] = useState<string>('all');
 
   // New Goal State
   const [newTitle, setNewTitle] = useState('');
@@ -45,23 +43,6 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
     setNewOwnerId('family');
   };
 
-
-  const filteredGoals = goals.filter(goal => {
-    // Timeframe filter
-    if (timeframeFilter === 'one-year' && goal.timeframe !== Timeframe.ONE_YEAR) {
-      return false;
-    }
-
-    // Member filter
-    if (memberFilter === 'all') {
-      return true;
-    }
-    if (memberFilter === 'family') {
-      return goal.ownerId === 'family';
-    }
-    return goal.ownerId === memberFilter;
-  });
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -69,53 +50,6 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
           <h2 className="text-2xl font-bold text-slate-800">Goals</h2>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => setTimeframeFilter(timeframeFilter === 'all' ? 'one-year' : 'all')}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-            title={`Show ${timeframeFilter === 'all' ? '1 Year goals only' : 'all goals'}`}
-          >
-            <Filter size={18} />
-            {timeframeFilter === 'all' ? '1 Year' : 'All Timeframes'}
-          </button>
-
-          {/* Member filter buttons */}
-          <div className="flex gap-1 bg-white border border-slate-200 rounded-lg p-1">
-            <button
-              onClick={() => setMemberFilter('all')}
-              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                memberFilter === 'all'
-                  ? 'bg-slate-800 text-white'
-                  : 'text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setMemberFilter('family')}
-              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
-                memberFilter === 'family'
-                  ? 'bg-indigo-600 text-white'
-                  : 'text-indigo-600 hover:bg-indigo-50'
-              }`}
-            >
-              Family
-            </button>
-            {members.map((member) => (
-              <button
-                key={member.id}
-                onClick={() => setMemberFilter(member.id)}
-                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                  memberFilter === member.id
-                    ? 'bg-emerald-600 text-white'
-                    : 'text-emerald-600 hover:bg-emerald-50'
-                }`}
-              >
-                <img src={member.avatar} alt={member.name} className="w-4 h-4 rounded-full" />
-                {member.name}
-              </button>
-            ))}
-          </div>
-
           <button
             onClick={() => setIsModalOpen(true)}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
@@ -127,7 +61,7 @@ export const GoalsComponent: React.FC<GoalsComponentProps> = ({ goals, members, 
 
 
       <div className="space-y-3">
-        {filteredGoals.map((goal) => {
+        {goals.map((goal) => {
           const owner = members.find(m => m.id === goal.ownerId);
           return (
             <div key={goal.id} className="bg-white p-4 rounded-lg border border-slate-200 hover:shadow-sm transition-shadow">

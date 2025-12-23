@@ -230,3 +230,4 @@ The system ensures users only see modules that are:
 1. Applicable to the current context (user vs group)
 2. Enabled in the configuration (user.enabledModules or group.enabledModules)
 
+

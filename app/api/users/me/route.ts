@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { data: user, error } = await supabase
       .from('users')
-      .select('id, name, email, avatar, phone, default_view, enabled_modules')
+      .select('id, name, email, avatar, phone, default_view, enabled_modules, instagram, x_twitter, facebook, linkedin, tiktok, youtube, github, website')
       .eq('id', session.user.id)
       .single();
 
@@ -29,6 +29,14 @@ export async function GET(request: NextRequest) {
       phone: user.phone,
       default_view: user.default_view,
       enabled_modules: user.enabled_modules,
+      instagram: user.instagram,
+      x_twitter: user.x_twitter,
+      facebook: user.facebook,
+      linkedin: user.linkedin,
+      tiktok: user.tiktok,
+      youtube: user.youtube,
+      github: user.github,
+      website: user.website,
     };
 
     return NextResponse.json(response);
@@ -49,7 +57,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, defaultView, avatar, phone } = body;
+    const { name, defaultView, avatar, phone, instagram, x_twitter, facebook, linkedin, tiktok, youtube, github, website } = body;
 
     const updates: Record<string, any> = {};
     if (name !== undefined) updates.name = name;
@@ -68,6 +76,19 @@ export async function PATCH(request: NextRequest) {
         updates.phone = phone.trim();
       } else {
         updates.phone = null;
+      }
+    }
+    
+    // Social media fields
+    const socialFields = ['instagram', 'x_twitter', 'facebook', 'linkedin', 'tiktok', 'youtube', 'github', 'website'];
+    for (const field of socialFields) {
+      const value = body[field];
+      if (value !== undefined) {
+        if (value && typeof value === 'string' && value.trim()) {
+          updates[field] = value.trim();
+        } else {
+          updates[field] = null;
+        }
       }
     }
 

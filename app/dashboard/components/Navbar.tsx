@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/components/ui/button";
-import { LayoutDashboard, Settings } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import { GroupDropdown } from "./GroupDropdown";
 import { useGroup } from "@/lib/GroupContext";
 import { useModules } from "@/app/modules/hooks/useModules";
@@ -40,17 +40,11 @@ export function Sidebar({ className }: { className?: string }) {
       alwaysVisible: true, // Always show overview
     },
     ...dynamicItems,
-    {
-      title: "Settings",
-      href: "/dashboard/settings",
-      icon: Settings,
-      alwaysVisible: true, // Always show settings
-    }
   ];
 
   // Filter items based on enabled modules
   const visibleItems = allItems.filter(item => {
-    // Always show items marked as alwaysVisible (Overview, Settings)
+    // Always show items marked as alwaysVisible (Overview)
     if (item.alwaysVisible) {
       return true;
     }

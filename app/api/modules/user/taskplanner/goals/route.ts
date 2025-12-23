@@ -23,48 +23,91 @@ export async function GET(request: NextRequest) {
     // Use server client (bypasses RLS)
     const supabase = getSupabaseServerClient();
     
-    // Build query
-    let query = supabase
-      .from('goals')
-      .select('*')
-      .eq('user_id', session.user.id);
-
-    // Filter by group_id if provided
+    // For group view: verify membership and show ALL goals for the group
+    // For self view: show ONLY the current user's personal goals
     if (groupId) {
-      query = query.eq('group_id', groupId);
-    } else {
-      // If no groupId, only return goals with null group_id (personal goals)
-      query = query.is('group_id', null);
-    }
+      // Verify user has access to this group
+      const { data: groupMember } = await supabase
+        .from('group_members')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('user_id', session.user.id)
+        .eq('is_active', true)
+        .single();
 
-    const { data: goals, error } = await query.order('created_at', { ascending: false });
-
-    // Handle table doesn't exist or other errors gracefully
-    if (error) {
-      // If table doesn't exist or query fails, return empty array
-      if (
-        error.code === '42P01' ||
-        error.code === 'PGRST116' ||
-        error.message?.includes('does not exist') ||
-        error.message?.includes('relation') ||
-        error.message?.includes('Could not find a relationship')
-      ) {
-        return NextResponse.json([]);
+      if (!groupMember) {
+        return NextResponse.json({ error: 'Forbidden: Not a member of this group' }, { status: 403 });
       }
-      throw error;
+
+      // Show ALL goals for the group (not filtered by user_id)
+      const { data: goals, error } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
+
+      // Handle table doesn't exist or other errors gracefully
+      if (error) {
+        // If table doesn't exist or query fails, return empty array
+        if (
+          error.code === '42P01' ||
+          error.code === 'PGRST116' ||
+          error.message?.includes('does not exist') ||
+          error.message?.includes('relation') ||
+          error.message?.includes('Could not find a relationship')
+        ) {
+          return NextResponse.json([]);
+        }
+        throw error;
+      }
+
+      // Transform to match Goal interface (convert snake_case to camelCase)
+      // Map database fields: title -> text/goal, text -> text/goal
+      const transformedGoals = goals.map((goal: any) => ({
+        id: goal.id,
+        text: goal.text || goal.title || '',
+        goal: goal.goal || goal.text || goal.title || '',
+        progress: goal.progress || 0,
+        created_at: goal.created_at,
+      }));
+
+      return NextResponse.json(transformedGoals);
+    } else {
+      // Self view: only return goals with null group_id (personal goals) for current user
+      const { data: goals, error } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .is('group_id', null)
+        .order('created_at', { ascending: false });
+
+      // Handle table doesn't exist or other errors gracefully
+      if (error) {
+        // If table doesn't exist or query fails, return empty array
+        if (
+          error.code === '42P01' ||
+          error.code === 'PGRST116' ||
+          error.message?.includes('does not exist') ||
+          error.message?.includes('relation') ||
+          error.message?.includes('Could not find a relationship')
+        ) {
+          return NextResponse.json([]);
+        }
+        throw error;
+      }
+
+      // Transform to match Goal interface (convert snake_case to camelCase)
+      // Map database fields: title -> text/goal, text -> text/goal
+      const transformedGoals = goals.map((goal: any) => ({
+        id: goal.id,
+        text: goal.text || goal.title || '',
+        goal: goal.goal || goal.text || goal.title || '',
+        progress: goal.progress || 0,
+        created_at: goal.created_at,
+      }));
+
+      return NextResponse.json(transformedGoals);
     }
-
-    // Transform to match Goal interface (convert snake_case to camelCase)
-    // Map database fields: title -> text/goal, text -> text/goal
-    const transformedGoals = goals.map((goal: any) => ({
-      id: goal.id,
-      text: goal.text || goal.title || '',
-      goal: goal.goal || goal.text || goal.title || '',
-      progress: goal.progress || 0,
-      created_at: goal.created_at,
-    }));
-
-    return NextResponse.json(transformedGoals);
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to fetch goals' },

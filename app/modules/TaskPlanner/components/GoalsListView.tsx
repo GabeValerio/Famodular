@@ -15,6 +15,7 @@ interface GoalsListViewProps {
   onTaskDelete?: (taskId: string) => void;
   onTaskEdit?: (task: Task) => void;
   onAddTask?: (goalId: string) => void;
+  onAddSubtask?: (taskId: string) => void;
   selectedTimezone?: string;
 }
 
@@ -29,6 +30,7 @@ export default function GoalsListView({
   onTaskDelete,
   onTaskEdit,
   onAddTask,
+  onAddSubtask,
   selectedTimezone,
 }: GoalsListViewProps) {
   return (
@@ -48,6 +50,7 @@ export default function GoalsListView({
               onTaskDelete={onTaskDelete}
               onTaskEdit={onTaskEdit}
               onAddTask={onAddTask}
+              onAddSubtask={onAddSubtask}
               selectedTimezone={selectedTimezone}
             />
           ))}

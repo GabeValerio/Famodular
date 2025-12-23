@@ -92,9 +92,17 @@ export function GroupDropdown({ className }: GroupDropdownProps) {
       if (groups.length > 0) {
         setCurrentGroup(groups[0]);
       }
-    } else {
-      // Switch to self view
-      setSelfView();
+    } else if (currentGroup) {
+      // Find current group index
+      const currentIndex = groups.findIndex(g => g.id === currentGroup.id);
+      
+      // If we found the current group and there's a next group, go to it
+      if (currentIndex !== -1 && currentIndex < groups.length - 1) {
+        setCurrentGroup(groups[currentIndex + 1]);
+      } else {
+        // If we're at the last group, cycle back to self view
+        setSelfView();
+      }
     }
   };
 

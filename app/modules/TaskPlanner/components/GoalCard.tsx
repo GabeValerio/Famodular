@@ -18,6 +18,7 @@ interface GoalCardProps {
   onTaskDelete?: (taskId: string) => void;
   onTaskEdit?: (task: Task) => void;
   onAddTask?: (goalId: string) => void;
+  onAddSubtask?: (taskId: string) => void;
   selectedTimezone?: string;
 }
 
@@ -32,6 +33,7 @@ export default function GoalCard({
   onTaskDelete,
   onTaskEdit,
   onAddTask,
+  onAddSubtask,
   selectedTimezone = 'America/New_York',
 }: GoalCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -165,9 +167,10 @@ export default function GoalCard({
                 onTaskToggle: onTaskToggle,
                 onTaskDelete: onTaskDelete,
                 onTaskEdit: onTaskEdit,
+                onAddSubtask: onAddSubtask,
                 onToggleComplete: (taskId: string) => onTaskToggle?.({ ...task, id: taskId } as Task),
                 onDelete: onTaskDelete || (() => {}),
-                onAddNested: () => {},
+                onAddNested: onAddSubtask ? (taskId: string) => onAddSubtask(taskId) : () => {},
                 onMoveUp: () => {},
                 onMoveDown: () => {},
                 isPriorityEditMode: false,

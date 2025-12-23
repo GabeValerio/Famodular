@@ -24,3 +24,4 @@ SET enabled_modules = enabled_modules || '{"plants": false}'::jsonb
 WHERE enabled_modules::jsonb ? 'plants' = false;
 
 
+

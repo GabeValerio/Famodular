@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Settings,
   Sprout,
+  FileText,
   LucideIcon
 } from 'lucide-react';
 
@@ -26,6 +27,7 @@ const iconMap: Record<string, LucideIcon> = {
   LayoutDashboard,
   Settings,
   Sprout,
+  FileText,
 };
 
 export function getIconComponent(iconName: string): LucideIcon {

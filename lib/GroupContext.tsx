@@ -73,6 +73,14 @@ export function GroupProvider({ children }: { children: ReactNode }) {
       let userAvatar: string | undefined = undefined;
       let userName = session.user.name || '';
       let userPhone: string | undefined = undefined;
+      let userInstagram: string | undefined = undefined;
+      let userXTwitter: string | undefined = undefined;
+      let userFacebook: string | undefined = undefined;
+      let userLinkedin: string | undefined = undefined;
+      let userTiktok: string | undefined = undefined;
+      let userYoutube: string | undefined = undefined;
+      let userGithub: string | undefined = undefined;
+      let userWebsite: string | undefined = undefined;
       
       if (profileResponse?.ok) {
         const profile = await profileResponse.json();
@@ -89,6 +97,30 @@ export function GroupProvider({ children }: { children: ReactNode }) {
         if (profile.phone) {
           userPhone = profile.phone;
         }
+        if (profile.instagram) {
+          userInstagram = profile.instagram;
+        }
+        if (profile.x_twitter) {
+          userXTwitter = profile.x_twitter;
+        }
+        if (profile.facebook) {
+          userFacebook = profile.facebook;
+        }
+        if (profile.linkedin) {
+          userLinkedin = profile.linkedin;
+        }
+        if (profile.tiktok) {
+          userTiktok = profile.tiktok;
+        }
+        if (profile.youtube) {
+          userYoutube = profile.youtube;
+        }
+        if (profile.github) {
+          userGithub = profile.github;
+        }
+        if (profile.website) {
+          userWebsite = profile.website;
+        }
       } else {
         // Failed to fetch user profile
       }
@@ -101,6 +133,14 @@ export function GroupProvider({ children }: { children: ReactNode }) {
         phone: userPhone,
         groups: [],
         defaultView: userDefaultView,
+        instagram: userInstagram,
+        x_twitter: userXTwitter,
+        facebook: userFacebook,
+        linkedin: userLinkedin,
+        tiktok: userTiktok,
+        youtube: userYoutube,
+        github: userGithub,
+        website: userWebsite,
       };
 
       if (modulesResponse?.ok) {
@@ -119,6 +159,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           calendar: true,
           todos: true,
           taskplanner: false,
+          notepad: false,
         };
       }
 
@@ -143,6 +184,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           calendar: true,
           todos: true,
           taskplanner: true,
+          notepad: true,
         },
       } as User;
       setCurrentUser(fallbackUser);

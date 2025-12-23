@@ -21,6 +21,7 @@ interface WeeklyViewProps {
   setSelectedTask: (task: Task | null) => void;
   onTaskToggle?: (task: Task) => void;
   onTaskDelete?: (taskId: string) => void;
+  onAddSubtask?: (taskId: string) => void;
   selectedTimezone: string;
   selectedStatusFilter: string;
   selectedTypeFilter: string;
@@ -43,6 +44,7 @@ export default function WeeklyView({
   setSelectedTask,
   onTaskToggle,
   onTaskDelete,
+  onAddSubtask,
   selectedTimezone,
   selectedStatusFilter,
   selectedTypeFilter,
@@ -273,7 +275,8 @@ export default function WeeklyView({
                       onSelect: () => setSelectedTask(task),
                       onToggleComplete: () => onTaskToggle?.(task),
                       onDelete: (taskId: string) => onTaskDelete?.(taskId),
-                      onAddNested: () => {},
+                      onAddSubtask: onAddSubtask,
+                      onAddNested: onAddSubtask ? (taskId: string) => onAddSubtask(taskId) : () => {},
                       onMoveUp: () => {},
                       onMoveDown: () => {},
                       isPriorityEditMode: false,

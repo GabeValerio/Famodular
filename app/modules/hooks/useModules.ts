@@ -55,13 +55,26 @@ export function useModules() {
     // In self view (group is null), check user module configuration
     if (group === null) {
       if (user?.enabledModules) {
-        return user.enabledModules[moduleId as keyof ModuleConfig] ?? module.defaultEnabled;
+        // If user has enabledModules configured, check if module is explicitly set
+        // If module key exists, use its value; if not, it's not enabled (strict check)
+        const enabledModules = user.enabledModules as unknown as Record<string, boolean>;
+        const moduleValue = enabledModules[moduleId];
+        return moduleValue === true;
       }
       return module.defaultEnabled;
     }
 
     // Group view: check group module configuration
-    return group.enabledModules?.[moduleId as keyof ModuleConfig] ?? module.defaultEnabled;
+    // Note: category is informational only - modules can be enabled in any context
+    if (group.enabledModules) {
+      // If group has enabledModules configured, check if module is explicitly set
+      // If module key exists, use its value; if not, it's not enabled (strict check)
+      const enabledModules = group.enabledModules as unknown as Record<string, boolean>;
+      const moduleValue = enabledModules[moduleId];
+      return moduleValue === true;
+    }
+    
+    return module.defaultEnabled;
   };
 
   const getEnabledModules = (group: Group | null, user?: User | null): string[] => {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/app/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/components/ui/card';
 import { Badge } from '@/app/components/ui/badge';
@@ -19,11 +20,20 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { InviteMemberDialog } from '@/app/dashboard/components/InviteMemberDialog';
 
 export default function SettingsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { groups, currentGroup, setCurrentGroup, refreshGroups, currentUser, refreshUser } = useGroup();
   const { modules, loading: modulesLoading, getGroupModules, getUserModules } = useModules();
   const [members] = useState([]);
-  const [activeTab, setActiveTab] = useState('personal');
-  const [selectedGroupId, setSelectedGroupId] = useState<string>(currentGroup?.id || groups[0]?.id || '');
+  
+  // Read URL parameters
+  const urlGroupId = searchParams.get('group');
+  const urlTab = searchParams.get('tab') || 'personal';
+  
+  const [activeTab, setActiveTab] = useState(urlTab);
+  const [selectedGroupId, setSelectedGroupId] = useState<string>(
+    urlGroupId || currentGroup?.id || groups[0]?.id || ''
+  );
   const [isCreateGroupDialogOpen, setIsCreateGroupDialogOpen] = useState(false);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [newGroup, setNewGroup] = useState({
@@ -32,6 +42,43 @@ export default function SettingsPage() {
     privacy: 'private' as 'public' | 'private' | 'invite-only',
     avatar: ''
   });
+
+  // Update URL when tab or group changes
+  const updateUrl = (tab: string, groupId?: string | null) => {
+    const params = new URLSearchParams();
+    if (tab) {
+      params.set('tab', tab);
+    }
+    if (groupId) {
+      params.set('group', groupId);
+    }
+    const queryString = params.toString();
+    router.push(`/dashboard/settings${queryString ? `?${queryString}` : ''}`, { scroll: false });
+  };
+
+  // Sync URL parameters on mount and when they change
+  useEffect(() => {
+    const urlGroupId = searchParams.get('group');
+    const urlTab = searchParams.get('tab') || 'personal';
+    
+    // Update tab from URL
+    if (urlTab !== activeTab) {
+      setActiveTab(urlTab);
+    }
+    
+    // If URL has a group ID, select that group
+    if (urlGroupId) {
+      const group = groups.find(g => g.id === urlGroupId);
+      if (group && urlGroupId !== selectedGroupId) {
+        setSelectedGroupId(urlGroupId);
+        // Optionally set as current group if different
+        if (currentGroup?.id !== urlGroupId) {
+          setCurrentGroup(group);
+        }
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]); // Only depend on searchParams to avoid infinite loops
 
   // Get the selected group
   const selectedGroup = groups.find(g => g.id === selectedGroupId) || currentGroup;
@@ -45,7 +92,15 @@ export default function SettingsPage() {
     locationSharing: true,
     theme: 'light',
     profilePicture: '',
-    defaultView: 'self'
+    defaultView: 'self',
+    instagram: '',
+    x_twitter: '',
+    facebook: '',
+    linkedin: '',
+    tiktok: '',
+    youtube: '',
+    github: '',
+    website: ''
   });
   const [userModules, setUserModules] = useState<ModuleConfig>({
     checkins: true,
@@ -58,6 +113,7 @@ export default function SettingsPage() {
     todos: true,
     plants: false,
     taskplanner: true,
+    notepad: true,
   });
   const [personalUploading, setPersonalUploading] = useState(false);
   const [savingUserModules, setSavingUserModules] = useState(false);
@@ -71,7 +127,15 @@ export default function SettingsPage() {
         email: currentUser.email || '',
         phone: currentUser.phone || '',
         profilePicture: currentUser.avatar || '',
-        defaultView: currentUser.defaultView || 'self'
+        defaultView: currentUser.defaultView || 'self',
+        instagram: currentUser.instagram || '',
+        x_twitter: currentUser.x_twitter || '',
+        facebook: currentUser.facebook || '',
+        linkedin: currentUser.linkedin || '',
+        tiktok: currentUser.tiktok || '',
+        youtube: currentUser.youtube || '',
+        github: currentUser.github || '',
+        website: currentUser.website || ''
       }));
       
       if (currentUser.enabledModules) {
@@ -318,6 +382,14 @@ export default function SettingsPage() {
         defaultView: personalSettings.defaultView,
         avatar: personalSettings.profilePicture || null,
         phone: personalSettings.phone || null,
+        instagram: personalSettings.instagram || null,
+        x_twitter: personalSettings.x_twitter || null,
+        facebook: personalSettings.facebook || null,
+        linkedin: personalSettings.linkedin || null,
+        tiktok: personalSettings.tiktok || null,
+        youtube: personalSettings.youtube || null,
+        github: personalSettings.github || null,
+        website: personalSettings.website || null,
       };
 
       const response = await fetch('/api/users/me', {
@@ -458,6 +530,10 @@ export default function SettingsPage() {
       setCurrentGroup(createdGroup);
       setSelectedGroupId(createdGroup.id);
       
+      // Update URL to show the new group
+      updateUrl('groups', createdGroup.id);
+      setActiveTab('groups');
+      
       // Reset form and close dialog
       setNewGroup({
         name: '',
@@ -523,9 +599,30 @@ export default function SettingsPage() {
     }
   };
 
+  // Handle tab change with URL update
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'groups' && selectedGroupId) {
+      updateUrl(value, selectedGroupId);
+    } else if (value === 'personal') {
+      updateUrl(value);
+    }
+  };
+
+  // Handle group selection with URL update
+  const handleGroupSelect = (groupId: string) => {
+    setSelectedGroupId(groupId);
+    const group = groups.find(g => g.id === groupId);
+    if (group) {
+      setCurrentGroup(group);
+      updateUrl('groups', groupId);
+      setActiveTab('groups');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
           <div className="flex items-center gap-4">
@@ -657,6 +754,95 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
+
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-4">Social Media & Links</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram">Instagram</Label>
+                    <Input
+                      id="instagram"
+                      type="text"
+                      placeholder="@username or URL"
+                      value={personalSettings.instagram}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, instagram: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="x_twitter">X (Twitter)</Label>
+                    <Input
+                      id="x_twitter"
+                      type="text"
+                      placeholder="@username or URL"
+                      value={personalSettings.x_twitter}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, x_twitter: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="facebook">Facebook</Label>
+                    <Input
+                      id="facebook"
+                      type="text"
+                      placeholder="Username or URL"
+                      value={personalSettings.facebook}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, facebook: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin">LinkedIn</Label>
+                    <Input
+                      id="linkedin"
+                      type="text"
+                      placeholder="Username or URL"
+                      value={personalSettings.linkedin}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, linkedin: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="tiktok">TikTok</Label>
+                    <Input
+                      id="tiktok"
+                      type="text"
+                      placeholder="@username"
+                      value={personalSettings.tiktok}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, tiktok: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="youtube">YouTube</Label>
+                    <Input
+                      id="youtube"
+                      type="text"
+                      placeholder="Channel name or URL"
+                      value={personalSettings.youtube}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, youtube: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="github">GitHub</Label>
+                    <Input
+                      id="github"
+                      type="text"
+                      placeholder="Username"
+                      value={personalSettings.github}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, github: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      type="url"
+                      placeholder="https://example.com"
+                      value={personalSettings.website}
+                      onChange={(e) => setPersonalSettings(prev => ({ ...prev, website: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground mt-4">
+                  Add your social media profiles and links. You can enter usernames or full URLs.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -779,10 +965,7 @@ export default function SettingsPage() {
                       className={`flex flex-col items-center p-4 border rounded-lg cursor-pointer transition-colors ${
                         isSelected ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 hover:border-gray-300'
                       }`}
-                      onClick={() => {
-                        setSelectedGroupId(group.id);
-                        setCurrentGroup(group);
-                      }}
+                      onClick={() => handleGroupSelect(group.id)}
                     >
                       <img
                         src={group.avatar}

@@ -12,7 +12,10 @@ interface AllGoalsViewProps {
   onTaskToggle?: (task: Task) => void;
   onTaskDelete?: (taskId: string) => void;
   onTaskEdit?: (task: Task) => void;
+  onAddSubtask?: (taskId: string) => void;
   selectedTimezone: string;
+  handleUpdateTask?: (taskId: string, newText: string, newType: string, newDueDate?: Date | null, newGoalId?: string, newImageUrl?: string | null) => Promise<void>;
+  handleUpdateTime?: (taskId: string, estimatedTime?: number | null, completedTime?: number | null) => Promise<void>;
 }
 
 export default function AllGoalsView({
@@ -22,20 +25,48 @@ export default function AllGoalsView({
   onTaskToggle,
   onTaskDelete,
   onTaskEdit,
+  onAddSubtask,
   selectedTimezone,
+  handleUpdateTask,
+  handleUpdateTime,
 }: AllGoalsViewProps) {
+  // Organize tasks into parent-child hierarchy
+  const organizeTasks = (taskList: Task[]) => {
+    const parentTasks = taskList.filter(task => {
+      const parentId = task.parentId || task.parent_id;
+      return !parentId;
+    });
+    const childTasks = taskList.filter(task => {
+      const parentId = task.parentId || task.parent_id;
+      return !!parentId;
+    });
+    
+    // Group children by parent
+    const childrenByParent = childTasks.reduce((acc, child) => {
+      const parentId = (child.parentId || child.parent_id)!;
+      if (!acc[parentId]) {
+        acc[parentId] = [];
+      }
+      acc[parentId].push(child);
+      return acc;
+    }, {} as Record<string, Task[]>);
+
+    return { parentTasks, childrenByParent };
+  };
+
   // Group tasks by goal, but also include goals without tasks
   const tasksByGoal = goals.map(goal => {
     const goalTasks = tasks.filter(task => {
       const goalId = task.goalId || task.goal_id;
       return goalId === goal.id;
     });
-    return { goal, tasks: goalTasks };
+    const { parentTasks, childrenByParent } = organizeTasks(goalTasks);
+    return { goal, parentTasks, childrenByParent };
   });
 
   // Separate goals with tasks and goals without tasks
-  const goalsWithTasks = tasksByGoal.filter(group => group.tasks.length > 0);
-  const goalsWithoutTasks = tasksByGoal.filter(group => group.tasks.length === 0);
+  const goalsWithTasks = tasksByGoal.filter(group => group.parentTasks.length > 0);
+  const goalsWithoutTasks = tasksByGoal.filter(group => group.parentTasks.length === 0);
 
   if (goalsWithTasks.length === 0 && goalsWithoutTasks.length === 0) {
     return (
@@ -52,37 +83,75 @@ export default function AllGoalsView({
   return (
     <div className="space-y-8">
       {/* Goals with tasks */}
-      {goalsWithTasks.map(({ goal, tasks: goalTasks }) => (
+      {goalsWithTasks.map(({ goal, parentTasks, childrenByParent }) => (
         <div key={goal.id} className="bg-white rounded-lg">
           {/* Goal Section Header */}
           <h2 className="text-xl font-bold text-center py-4 border-b">{goal.goal || goal.text}</h2>
           
           {/* Tasks List */}
           <div className="p-4 space-y-2">
-            {goalTasks.map((task) => {
-              const itemProps: TaskItemProps = {
-                task,
-                tasks: goalTasks,
-                goals,
-                onTaskToggle: onTaskToggle,
-                onTaskDelete: onTaskDelete,
-                onTaskEdit: onTaskEdit,
-                onToggleComplete: (taskId: string) => onTaskToggle?.({ ...task, id: taskId } as Task),
-                onDelete: onTaskDelete || (() => {}),
-                onAddNested: () => {},
-                onMoveUp: () => {},
-                onMoveDown: () => {},
-                isPriorityEditMode: false,
-                handlePriorityUpdate: async () => {},
-                handleUpdateTask: async () => {},
-                handleUpdateException: async () => {},
-                handleUpdateTime: async () => {},
-                isSelected: false,
-                onSelect: () => {},
-                selectedTimezone,
-                showGoalLabel: false,
-              };
-              return <TaskItem key={task.id} {...itemProps} />;
+            {parentTasks.map((parentTask) => {
+              const children = childrenByParent[parentTask.id] || [];
+              return (
+                <div key={parentTask.id} className="space-y-2">
+                  {/* Parent Task */}
+                  <TaskItem
+                    task={parentTask}
+                    tasks={tasks}
+                    goals={goals}
+                    onTaskToggle={onTaskToggle}
+                    onTaskDelete={onTaskDelete}
+                    onTaskEdit={undefined}
+                    onAddSubtask={onAddSubtask}
+                    onToggleComplete={(taskId: string) => onTaskToggle?.({ ...parentTask, id: taskId } as Task)}
+                    onDelete={onTaskDelete || (() => {})}
+                    onAddNested={onAddSubtask ? (taskId: string) => onAddSubtask(taskId) : () => {}}
+                    onMoveUp={() => {}}
+                    onMoveDown={() => {}}
+                    isPriorityEditMode={false}
+                    handlePriorityUpdate={async () => {}}
+                    handleUpdateTask={handleUpdateTask}
+                    handleUpdateException={async () => {}}
+                    handleUpdateTime={handleUpdateTime}
+                    isSelected={false}
+                    onSelect={() => {}}
+                    selectedTimezone={selectedTimezone}
+                    showGoalLabel={false}
+                  />
+                  
+                  {/* Subtasks - Indented */}
+                  {children.length > 0 && (
+                    <div className="ml-8 space-y-2 border-l-2 border-gray-200 pl-4">
+                      {children.map((childTask) => (
+                        <TaskItem
+                          key={childTask.id}
+                          task={childTask}
+                          tasks={tasks}
+                          goals={goals}
+                          onTaskToggle={onTaskToggle}
+                          onTaskDelete={onTaskDelete}
+                          onTaskEdit={undefined}
+                          onAddSubtask={onAddSubtask}
+                          onToggleComplete={(taskId: string) => onTaskToggle?.({ ...childTask, id: taskId } as Task)}
+                          onDelete={onTaskDelete || (() => {})}
+                          onAddNested={onAddSubtask ? (taskId: string) => onAddSubtask(taskId) : () => {}}
+                          onMoveUp={() => {}}
+                          onMoveDown={() => {}}
+                          isPriorityEditMode={false}
+                          handlePriorityUpdate={async () => {}}
+                          handleUpdateTask={handleUpdateTask}
+                          handleUpdateException={async () => {}}
+                          handleUpdateTime={handleUpdateTime}
+                          isSelected={false}
+                          onSelect={() => {}}
+                          selectedTimezone={selectedTimezone}
+                          showGoalLabel={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
             })}
           </div>
         </div>
