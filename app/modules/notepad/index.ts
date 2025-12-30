@@ -4,3 +4,4 @@ export { NotepadComponent } from './components/NotepadComponent';
 export { useNotepad } from './hooks/useNotepad';
 export type { NotepadFolder, NotepadNote, CreateFolderInput, UpdateFolderInput, CreateNoteInput, UpdateNoteInput } from './types';
 
+

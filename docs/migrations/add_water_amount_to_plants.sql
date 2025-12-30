@@ -3,3 +3,4 @@ ALTER TABLE plants ADD COLUMN IF NOT EXISTS water_amount VARCHAR(100);
 
 
 
+

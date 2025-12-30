@@ -35,7 +35,8 @@ INSERT INTO modules (id, name, description, icon, category, default_enabled, rou
 ('wishlist', 'Wishlist', 'Share wants and needs', 'ShoppingBag', 'group', false, '/dashboard/wishlist'),
 ('location', 'Location', 'Share locations', 'Map', 'group', false, '/dashboard/location'),
 ('calendar', 'Calendar', 'Shared calendar events', 'Calendar', 'user', true, '/dashboard/calendar'),
-('todos', 'To Do', 'Personal, work, and group tasks', 'CheckSquare', 'user', true, '/dashboard/todos');
+('todos', 'To Do', 'Personal, work, and group tasks', 'CheckSquare', 'user', true, '/dashboard/todos'),
+('timetracker', 'Time Tracker', 'Track time spent on projects', 'Timer', 'user', false, '/dashboard/timetracker');
 
 -- Create trigger for updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -48,4 +49,5 @@ $$ language 'plpgsql';
 
 CREATE TRIGGER update_modules_updated_at BEFORE UPDATE ON modules
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 

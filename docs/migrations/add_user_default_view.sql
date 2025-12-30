@@ -10,3 +10,4 @@ COMMENT ON COLUMN users.default_view IS 'Preferred starting view for the user. C
 CREATE INDEX IF NOT EXISTS idx_users_default_view ON users(default_view);
 
 
+

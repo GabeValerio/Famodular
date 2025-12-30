@@ -22,3 +22,4 @@ COMMENT ON COLUMN users.youtube IS 'YouTube channel username or URL';
 COMMENT ON COLUMN users.github IS 'GitHub profile username or URL';
 COMMENT ON COLUMN users.website IS 'Personal website URL';
 
+

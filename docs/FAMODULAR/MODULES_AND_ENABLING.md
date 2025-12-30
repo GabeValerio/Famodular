@@ -102,3 +102,4 @@ export function NotepadPage() {
 - **Settings:** Provides toggles for users (Personal Settings) and admins (Group Settings) to modify the `enabled_modules` JSON.
 - **Module Disabled Screen:** Standardized component shown when a user tries to access a disabled module.
 
+

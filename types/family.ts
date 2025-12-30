@@ -41,6 +41,7 @@ export interface ModuleConfig {
   plants: boolean;
   taskplanner: boolean;
   notepad: boolean;
+  timetracker: boolean;
 }
 
 // Alias for backward compatibility

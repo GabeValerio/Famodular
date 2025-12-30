@@ -114,6 +114,7 @@ export default function SettingsPage() {
     plants: false,
     taskplanner: true,
     notepad: true,
+    timetracker: false,
   });
   const [personalUploading, setPersonalUploading] = useState(false);
   const [savingUserModules, setSavingUserModules] = useState(false);

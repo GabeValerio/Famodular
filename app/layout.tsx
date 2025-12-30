@@ -10,6 +10,23 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'Famodular - Community Center Platform',
   description: 'A modular community center platform for groups of any kind. Customize your experience with the modules you need—calendars, todos, check-ins, goals, finance, and more',
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://famodular.com'),
+  openGraph: {
+    title: 'Famodular - Community Center Platform',
+    description: 'A modular community center platform for groups of any kind. Customize your experience with the modules you need—calendars, todos, check-ins, goals, finance, and more',
+    url: process.env.NEXT_PUBLIC_BASE_URL || 'https://famodular.com',
+    siteName: 'Famodular',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Famodular - Community Center Platform',
+    description: 'A modular community center platform for groups of any kind. Customize your experience with the modules you need—calendars, todos, check-ins, goals, finance, and more',
+  },
+  alternates: {
+    canonical: process.env.NEXT_PUBLIC_BASE_URL || 'https://famodular.com',
+  },
 };
 
 export default function RootLayout({

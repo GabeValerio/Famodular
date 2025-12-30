@@ -45,3 +45,4 @@ WHERE enabled_modules::text = '{
 COMMENT ON COLUMN groups.enabled_modules IS 'Module configuration for groups. Defaults to calendar and chat enabled for cleaner group setup.';
 
 
+
