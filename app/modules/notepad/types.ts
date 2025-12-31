@@ -32,3 +32,4 @@ export type CreateNoteInput = Omit<NotepadNote, 'id' | 'userId' | 'createdAt' | 
 export type UpdateNoteInput = Partial<Omit<NotepadNote, 'id' | 'createdAt' | 'updatedAt'>>;
 
 
+

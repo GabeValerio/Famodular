@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     // Verify project belongs to user if projectId is provided
     if (projectId) {
       const { data: project } = await supabase
-        .from('timetracker_projects')
+        .from('projects')
         .select('*')
         .eq('id', projectId)
         .eq('is_active', true)
@@ -103,7 +103,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .eq('id', entryId)
       .select(`
         *,
-        timetracker_projects (
+        projects (
           id,
           name,
           description,
@@ -123,11 +123,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const entryWithDates = {
       id: entry.id,
       projectId: entry.project_id,
-      project: entry.timetracker_projects ? {
-        id: entry.timetracker_projects.id,
-        name: entry.timetracker_projects.name,
-        description: entry.timetracker_projects.description,
-        color: entry.timetracker_projects.color,
+      project: entry.projects ? {
+        id: entry.projects.id,
+        name: entry.projects.name,
+        description: entry.projects.description,
+        color: entry.projects.color,
       } : undefined,
       userId: entry.user_id,
       groupId: entry.group_id,
@@ -221,3 +221,4 @@ async function checkGroupAccess(supabase: any, groupId: string, userId: string):
 
   return !!groupMember;
 }
+

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       .from('timetracker_entries')
       .select(`
         *,
-        timetracker_projects (
+        projects (
           id,
           name,
           description,
@@ -99,11 +99,11 @@ export async function GET(request: NextRequest) {
     const entriesWithDates = entries?.map(entry => ({
       id: entry.id,
       projectId: entry.project_id,
-      project: entry.timetracker_projects ? {
-        id: entry.timetracker_projects.id,
-        name: entry.timetracker_projects.name,
-        description: entry.timetracker_projects.description,
-        color: entry.timetracker_projects.color,
+      project: entry.projects ? {
+        id: entry.projects.id,
+        name: entry.projects.name,
+        description: entry.projects.description,
+        color: entry.projects.color,
       } : undefined,
       userId: entry.user_id,
       groupId: entry.group_id,
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
     // Verify project belongs to user if projectId is provided
     if (projectId) {
       const { data: project } = await supabase
-        .from('timetracker_projects')
+        .from('projects')
         .select('*')
         .eq('id', projectId)
         .eq('is_active', true)
@@ -218,7 +218,7 @@ export async function POST(request: NextRequest) {
       .insert(newEntry)
       .select(`
         *,
-        timetracker_projects (
+        projects (
           id,
           name,
           description,
@@ -244,11 +244,11 @@ export async function POST(request: NextRequest) {
     const entryWithDates = {
       id: entry.id,
       projectId: entry.project_id,
-      project: entry.timetracker_projects ? {
-        id: entry.timetracker_projects.id,
-        name: entry.timetracker_projects.name,
-        description: entry.timetracker_projects.description,
-        color: entry.timetracker_projects.color,
+      project: entry.projects ? {
+        id: entry.projects.id,
+        name: entry.projects.name,
+        description: entry.projects.description,
+        color: entry.projects.color,
       } : undefined,
       userId: entry.user_id,
       groupId: entry.group_id,
@@ -269,3 +269,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
