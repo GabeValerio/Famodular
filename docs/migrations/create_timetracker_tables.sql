@@ -10,7 +10,7 @@
 CREATE TABLE timetracker_entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID REFERENCES projects(id) ON DELETE SET NULL, -- Reference existing projects table
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Reference custom users table (not auth.users)
     group_id UUID REFERENCES groups(id) ON DELETE CASCADE, -- NULL for personal entries, UUID for group entries
     start_time TIMESTAMP WITH TIME ZONE NOT NULL,
     end_time TIMESTAMP WITH TIME ZONE, -- NULL if still tracking

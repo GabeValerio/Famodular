@@ -14,17 +14,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Only check authentication for admin routes
-  if (pathname.startsWith('/admin')) {
+  // Check authentication for protected routes
+  if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard')) {
     const token = await getToken({ req: request });
-    
+
     // If there's no token, redirect to login
     if (!token) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    // Check if user has admin role
-    if (token.role !== 'admin') {
+    // Check if user has admin role for admin routes
+    if (pathname.startsWith('/admin') && token.role !== 'admin') {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
