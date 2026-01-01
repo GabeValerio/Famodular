@@ -20,3 +20,4 @@ WHERE enabled_modules::text LIKE '%"finance": true%'
 
 
 
+
