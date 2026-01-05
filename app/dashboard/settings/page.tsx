@@ -117,6 +117,7 @@ export default function SettingsPage() {
     taskplanner: true,
     notepad: true,
     timetracker: false,
+    kitchen: false,
   });
   const [personalUploading, setPersonalUploading] = useState(false);
   const [savingUserModules, setSavingUserModules] = useState(false);
@@ -242,6 +243,10 @@ export default function SettingsPage() {
       calendar: true,
       todos: true,
       plants: false,
+      taskplanner: false,
+      notepad: false,
+      timetracker: false,
+      kitchen: false,
     }
   });
   const [groupUploading, setGroupUploading] = useState(false);
@@ -292,6 +297,10 @@ export default function SettingsPage() {
           calendar: true,
           todos: true,
           plants: false,
+          taskplanner: false,
+          notepad: false,
+          timetracker: false,
+          kitchen: false,
         }
       });
     }
