@@ -165,24 +165,29 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to add book: ${insertError.message}`);
     }
 
+    // Handle books relation - can be array or single object
+    const bookData = Array.isArray(newUserBook.books) 
+      ? newUserBook.books[0] 
+      : newUserBook.books;
+
     const response = {
       id: newUserBook.id,
       userId: newUserBook.user_id,
       bookId: newUserBook.book_id,
       startedDate: newUserBook.started_date,
       createdAt: newUserBook.created_at,
-      book: newUserBook.books ? {
-        id: newUserBook.books.id,
-        title: newUserBook.books.title,
-        authors: newUserBook.books.authors,
-        description: newUserBook.books.description,
-        imageLinks: newUserBook.books.image_links,
-        publishedDate: newUserBook.books.published_date,
-        publisher: newUserBook.books.publisher,
-        pageCount: newUserBook.books.page_count,
-        categories: newUserBook.books.categories,
-        averageRating: newUserBook.books.average_rating,
-        ratingsCount: newUserBook.books.ratings_count,
+      book: bookData ? {
+        id: bookData.id,
+        title: bookData.title,
+        authors: bookData.authors,
+        description: bookData.description,
+        imageLinks: bookData.image_links,
+        publishedDate: bookData.published_date,
+        publisher: bookData.publisher,
+        pageCount: bookData.page_count,
+        categories: bookData.categories,
+        averageRating: bookData.average_rating,
+        ratingsCount: bookData.ratings_count,
       } : undefined
     };
 
