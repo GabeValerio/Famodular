@@ -293,7 +293,7 @@ export function GroceryListComponent({ groupId }: GroceryListComponentProps) {
                             </span>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                               <span>{item.quantity} {item.unit}</span>
-                              {item.estimatedCost > 0 && (
+                              {item.estimatedCost && item.estimatedCost > 0 && (
                                 <span className="flex items-center">
                                   <DollarSign className="h-3 w-3 mr-1" />
                                   {item.estimatedCost.toFixed(2)}
