@@ -5,7 +5,7 @@ import { Button } from '@/app/components/ui/button';
 import { Camera, Upload, X, Check, Loader2 } from 'lucide-react';
 
 interface PhotoUploadComponentProps {
-  onPhotoTaken: (imageData: string[]) => void;
+  onPhotoTaken: (imageData: string[]) => void | Promise<void>;
   onCancel?: () => void;
 }
 
