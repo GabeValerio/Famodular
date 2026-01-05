@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/app/components/ui/button";
-import { LayoutDashboard } from "lucide-react";
+import { LayoutDashboard, User } from "lucide-react";
 import { GroupDropdown } from "./GroupDropdown";
 import { useGroup } from "@/lib/GroupContext";
 import { useModules } from "@/app/modules/hooks/useModules";
@@ -38,6 +38,12 @@ export function Sidebar({ className }: { className?: string }) {
       href: "/dashboard",
       icon: LayoutDashboard,
       alwaysVisible: true, // Always show overview
+    },
+    {
+      title: "Profile",
+      href: "/profile",
+      icon: User,
+      alwaysVisible: true, // Always show profile
     },
     ...dynamicItems,
   ];

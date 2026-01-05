@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // First get the user data
     const { data: user, error } = await supabase
       .from('users')
       .select('id, name, email, avatar, phone, default_view, enabled_modules, instagram, x_twitter, facebook, linkedin, tiktok, youtube, github, website')
@@ -20,6 +21,58 @@ export async function GET(request: NextRequest) {
     if (error) {
       throw error;
     }
+
+    // Then get all currently reading books
+    const { data: currentlyReading, error: readingError } = await supabase
+      .from('user_currently_reading')
+      .select(`
+        id,
+        user_id,
+        book_id,
+        started_date,
+        created_at,
+        books (
+          id,
+          title,
+          authors,
+          description,
+          image_links,
+          published_date,
+          publisher,
+          page_count,
+          categories,
+          average_rating,
+          ratings_count
+        )
+      `)
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false });
+
+    if (readingError) {
+      // Don't throw error if no books found, just return empty array
+      console.error('Error fetching books:', readingError);
+    }
+
+    const books = (currentlyReading || []).map((item: any) => ({
+      id: item.id,
+      userId: item.user_id,
+      bookId: item.book_id,
+      startedDate: item.started_date,
+      createdAt: item.created_at,
+      book: item.books ? {
+        id: item.books.id,
+        title: item.books.title,
+        authors: item.books.authors,
+        description: item.books.description,
+        imageLinks: item.books.image_links,
+        publishedDate: item.books.published_date,
+        publisher: item.books.publisher,
+        pageCount: item.books.page_count,
+        categories: item.books.categories,
+        averageRating: item.books.average_rating,
+        ratingsCount: item.books.ratings_count,
+      } : undefined
+    }));
 
     const response = {
       id: user.id,
@@ -37,6 +90,7 @@ export async function GET(request: NextRequest) {
       youtube: user.youtube,
       github: user.github,
       website: user.website,
+      currentlyReading: books,
     };
 
     return NextResponse.json(response);

@@ -11,6 +11,7 @@ import {
   Settings,
   Sprout,
   FileText,
+  ChefHat,
   LucideIcon
 } from 'lucide-react';
 
@@ -28,6 +29,7 @@ const iconMap: Record<string, LucideIcon> = {
   Settings,
   Sprout,
   FileText,
+  ChefHat,
 };
 
 export function getIconComponent(iconName: string): LucideIcon {

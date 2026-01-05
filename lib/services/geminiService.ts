@@ -1,7 +1,5 @@
 import { CheckIn, Goal, Message, FamilyMember } from '../../types/family';
-
-// Note: This service would require Google GenAI SDK to be installed
-// For now, this provides mock implementations that could be replaced with actual AI calls
+import { GoogleGenAI } from '@google/genai';
 
 export const getGoalAdvice = async (goal: Goal): Promise<string[]> => {
   // Mock implementation - replace with actual Google GenAI call
@@ -80,5 +78,75 @@ export const suggestActivity = async (theme: string): Promise<{ title: string; d
     }
   ];
   return activities[Math.floor(Math.random() * activities.length)];
+};
+
+export interface ParsedTimeEntry {
+  date: string; // MM/DD/YYYY format
+  startTime: string; // H:MM AM/PM format
+  endTime?: string; // H:MM AM/PM format
+  description?: string;
+}
+
+export const parseTimeEntriesWithGemini = async (inputText: string): Promise<ParsedTimeEntry[]> => {
+  try {
+    // Check if Google Gemini API key is configured
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+
+    if (!apiKey) {
+      throw new Error('Google Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY environment variable.');
+    }
+
+    const genAI = new GoogleGenAI({ apiKey });
+
+    const prompt = `Parse the following natural language text into structured time tracking entries. Each entry should have:
+- date: in MM/DD/YYYY format
+- startTime: in H:MM AM/PM format (e.g., "9:30 AM", "2:15 PM")
+- endTime: in H:MM AM/PM format (optional, only if specified)
+- description: any descriptive text about the activity (optional)
+
+Rules:
+- Use 12-hour format with AM/PM
+- If no year is specified, assume 2025
+- If no date is specified for an entry, infer it from context or previous entries
+- Handle various formats like "7/14/25 10:15-12:15pm meeting" or "3-5pm"
+- If only one time is given, treat it as start time only (no end time)
+- Extract any descriptive text as the description
+
+Input text:
+${inputText}
+
+Return ONLY a valid JSON array of objects with the format:
+[{"date": "MM/DD/YYYY", "startTime": "H:MM AM/PM", "endTime": "H:MM AM/PM", "description": "optional text"}]`;
+
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
+
+    const text = result.text;
+
+    if (!text) {
+      throw new Error('Empty response from AI');
+    }
+
+    // Clean up the response to get valid JSON
+    const cleanedText = text.trim().replace(/```json\s*/i, '').replace(/```\s*$/, '');
+
+    try {
+      const parsed = JSON.parse(cleanedText);
+      if (Array.isArray(parsed)) {
+        return parsed;
+      } else {
+        throw new Error('Response is not an array');
+      }
+    } catch (parseError) {
+      console.error('Failed to parse Gemini response:', cleanedText);
+      throw new Error('Failed to parse AI response as valid JSON');
+    }
+  } catch (error) {
+    console.error('Gemini parsing error:', error);
+    throw new Error(`Failed to parse time entries: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 };
 

@@ -42,6 +42,7 @@ export interface ModuleConfig {
   taskplanner: boolean;
   notepad: boolean;
   timetracker: boolean;
+  kitchen: boolean;
 }
 
 // Alias for backward compatibility
@@ -146,6 +147,36 @@ export interface Location {
   timestamp: Date;
 }
 
+export interface Book {
+  id: string;
+  title: string;
+  authors?: string[];
+  description?: string;
+  imageLinks?: {
+    smallThumbnail?: string;
+    thumbnail?: string;
+    small?: string;
+    medium?: string;
+    large?: string;
+    extraLarge?: string;
+  };
+  publishedDate?: string;
+  publisher?: string;
+  pageCount?: number;
+  categories?: string[];
+  averageRating?: number;
+  ratingsCount?: number;
+}
+
+export interface UserCurrentlyReading {
+  id: string;
+  userId: string;
+  bookId: string;
+  startedDate: Date;
+  createdAt?: Date;
+  book?: Book;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -163,6 +194,7 @@ export interface User {
   youtube?: string;
   github?: string;
   website?: string;
+  currentlyReading?: UserCurrentlyReading[]; // Array of books
 }
 
 export interface FamilyMember {

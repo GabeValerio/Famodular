@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const { entryId } = params;
     const body = await request.json();
-    const { projectId, startTime, endTime, description, isActive } = body;
+    let { projectId, startTime, endTime, description, isActive } = body;
 
     if (!entryId) {
       return NextResponse.json({ error: 'Entry ID is required' }, { status: 400 });
@@ -53,25 +53,30 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Forbidden: No access to this entry' }, { status: 403 });
     }
 
-    // Verify project belongs to user if projectId is provided
+    // Verify project belongs to user if projectId is provided and different from existing
     if (projectId) {
-      const { data: project } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', projectId)
-        .eq('is_active', true)
-        .single();
+      // If the projectId is the same as the existing entry, keep the existing project association
+      if (projectId === existingEntry.project_id) {
+        // Keep the existing project association - don't validate since we're not changing it
+      } else {
+        // Project is being changed, so validate the new project
+        const { data: project } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', projectId)
+          .single();
 
-      if (!project) {
-        return NextResponse.json({ error: 'Project not found or inactive' }, { status: 404 });
-      }
+        if (!project) {
+          return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+        }
 
-      // Check if user has access to this project
-      const hasProjectAccess = project.user_id === session.user.id ||
-        (project.group_id === existingEntry.group_id);
+        // Check if user has access to this project
+        const hasProjectAccess = project.user_id === session.user.id ||
+          (project.group_id === existingEntry.group_id);
 
-      if (!hasProjectAccess) {
-        return NextResponse.json({ error: 'Forbidden: No access to this project' }, { status: 403 });
+        if (!hasProjectAccess) {
+          return NextResponse.json({ error: 'Forbidden: No access to this project' }, { status: 403 });
+        }
       }
     }
 

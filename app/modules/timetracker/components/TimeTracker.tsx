@@ -11,7 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/app/components/ui/label';
 import { Input } from '@/app/components/ui/input';
 import { useTimeTracker } from '../hooks';
-import { Clock, Play, Square, Calendar, Plus, Edit, Trash2, Timer } from 'lucide-react';
+import { Clock, Play, Square, Calendar, Plus, Edit, Trash2, Timer, Upload } from 'lucide-react';
+import { ImportDialog } from './ImportDialog';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TimeTrackerProject, ManualEntryFormData, ProjectFormData } from '../types';
 
@@ -38,6 +39,7 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
     createManualEntry,
     updateEntry,
     deleteEntry,
+    importEntries,
     calculateStats,
     getMonthlyChartData,
   } = useTimeTracker({ groupId });
@@ -46,6 +48,7 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
   const [showStopDialog, setShowStopDialog] = useState(false);
   const [showManualEntryDialog, setShowManualEntryDialog] = useState(false);
   const [showProjectDialog, setShowProjectDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
   const [editingEntry, setEditingEntry] = useState<string | null>(null);
 
   // Form states
@@ -58,6 +61,12 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
     description: '',
     color: '#3b82f6',
   });
+
+  // When editing, include the entry's current project in the list even if it's inactive
+  const editingEntryData = editingEntry ? entries.find(e => e.id === editingEntry) : null;
+  const projectsForSelect = editingEntryData?.project && !projects.find(p => p.id === editingEntryData.project?.id)
+    ? [...projects, editingEntryData.project]
+    : projects;
 
   const stats = calculateStats();
   const chartData = getMonthlyChartData();
@@ -361,6 +370,10 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
                 <Plus className="h-4 w-4" />
                 Manual Add
               </Button>
+              <Button onClick={() => setShowImportDialog(true)} variant="outline" className="flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                Import
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -539,7 +552,7 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No project</SelectItem>
-                  {projects.map((project) => (
+                  {projectsForSelect.map((project) => (
                     <SelectItem key={project.id} value={project.id}>
                       {project.name}
                     </SelectItem>
@@ -628,6 +641,15 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import Dialog */}
+      <ImportDialog
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        projects={projects}
+        onImport={importEntries}
+        groupId={groupId}
+      />
     </div>
   );
 }

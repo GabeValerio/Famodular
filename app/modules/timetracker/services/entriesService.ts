@@ -1,4 +1,4 @@
-import { TimeTrackerEntry, CreateEntryInput, UpdateEntryInput } from '../types';
+import { TimeTrackerEntry, CreateEntryInput, UpdateEntryInput, ImportEntryData } from '../types';
 
 const API_BASE = '/api/modules/user/timetracker';
 
@@ -64,6 +64,22 @@ export class EntriesService {
       const error = await response.json();
       throw new Error(error.error || 'Failed to delete entry');
     }
+  }
+
+  static async importEntries(entries: (CreateEntryInput & { groupId?: string })[], groupId?: string): Promise<TimeTrackerEntry[]> {
+    const response = await fetch(`${API_BASE}/entries`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ entries, groupId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to import entries');
+    }
+    return response.json();
   }
 }
 

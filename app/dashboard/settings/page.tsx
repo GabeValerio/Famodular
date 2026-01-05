@@ -10,7 +10,7 @@ import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
 import { Textarea } from '@/app/components/ui/textarea';
-import { Plus, User, Save, Bell, Shield, Check, Phone, Users, Settings as SettingsIcon, Upload, UserPlus } from 'lucide-react';
+import { Plus, User, Save, Bell, Shield, Check, Phone, Users, Settings as SettingsIcon, Upload, UserPlus, X } from 'lucide-react';
 import { useGroup } from '@/lib/GroupContext';
 import { useModules } from '@/app/modules/hooks/useModules';
 import { getIconComponent } from '@/app/modules/utils/iconUtils';
@@ -18,6 +18,8 @@ import { Switch } from '@/app/components/ui/switch';
 import { ModuleConfig } from '@/types/family';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
 import { InviteMemberDialog } from '@/app/dashboard/components/InviteMemberDialog';
+import { BookSearch } from '@/app/components/BookSearch';
+import { BookSearchResult } from '@/lib/services/booksService';
 
 export default function SettingsPage() {
   const searchParams = useSearchParams();
@@ -100,7 +102,7 @@ export default function SettingsPage() {
     tiktok: '',
     youtube: '',
     github: '',
-    website: ''
+    website: '',
   });
   const [userModules, setUserModules] = useState<ModuleConfig>({
     checkins: true,
@@ -118,6 +120,8 @@ export default function SettingsPage() {
   });
   const [personalUploading, setPersonalUploading] = useState(false);
   const [savingUserModules, setSavingUserModules] = useState(false);
+  const [userBooks, setUserBooks] = useState<any[]>([]);
+  const [loadingBooks, setLoadingBooks] = useState(false);
 
   // Load user data on mount
   useEffect(() => {
@@ -136,7 +140,8 @@ export default function SettingsPage() {
         tiktok: currentUser.tiktok || '',
         youtube: currentUser.youtube || '',
         github: currentUser.github || '',
-        website: currentUser.website || ''
+        website: currentUser.website || '',
+        // Books are now managed separately
       }));
       
       if (currentUser.enabledModules) {
@@ -144,6 +149,82 @@ export default function SettingsPage() {
       }
     }
   }, [currentUser]);
+
+  // Load user books
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoadingBooks(true);
+      try {
+        const response = await fetch('/api/users/me/books');
+        if (response.ok) {
+          const books = await response.json();
+          setUserBooks(books);
+        }
+      } catch (error) {
+        console.error('Failed to fetch books:', error);
+      } finally {
+        setLoadingBooks(false);
+      }
+    };
+
+    if (currentUser) {
+      fetchBooks();
+    }
+  }, [currentUser]);
+
+  const handleAddBook = async (book: BookSearchResult) => {
+    try {
+      const response = await fetch('/api/users/me/books', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          book: {
+            id: book.id,
+            title: book.title,
+            authors: book.authors,
+            description: book.description,
+            imageLinks: book.imageLinks,
+            publishedDate: book.publishedDate,
+            publisher: book.publisher,
+            pageCount: book.pageCount,
+            categories: book.categories,
+            averageRating: book.averageRating,
+            ratingsCount: book.ratingsCount,
+            startedDate: new Date().toISOString(),
+          }
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to add book');
+      }
+
+      const newBook = await response.json();
+      setUserBooks(prev => [newBook, ...prev]);
+    } catch (error) {
+      alert(`Failed to add book: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleRemoveBook = async (readingId: string) => {
+    try {
+      const response = await fetch(`/api/users/me/books?id=${readingId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to remove book');
+      }
+
+      setUserBooks(prev => prev.filter(b => b.id !== readingId));
+    } catch (error) {
+      alert(`Failed to remove book: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
 
   // Group settings state - initialize with selected group
   const [groupSettings, setGroupSettings] = useState({
@@ -727,7 +808,6 @@ export default function SettingsPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="+1 (555) 123-4567"
                     value={personalSettings.phone}
                     onChange={(e) => setPersonalSettings(prev => ({ ...prev, phone: e.target.value }))}
                   />
@@ -739,7 +819,7 @@ export default function SettingsPage() {
                     onValueChange={(value) => setPersonalSettings(prev => ({ ...prev, defaultView: value }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select default view" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="self">Self (Personal)</SelectItem>
@@ -764,7 +844,6 @@ export default function SettingsPage() {
                     <Input
                       id="instagram"
                       type="text"
-                      placeholder="@username or URL"
                       value={personalSettings.instagram}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, instagram: e.target.value }))}
                     />
@@ -774,7 +853,6 @@ export default function SettingsPage() {
                     <Input
                       id="x_twitter"
                       type="text"
-                      placeholder="@username or URL"
                       value={personalSettings.x_twitter}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, x_twitter: e.target.value }))}
                     />
@@ -784,7 +862,6 @@ export default function SettingsPage() {
                     <Input
                       id="facebook"
                       type="text"
-                      placeholder="Username or URL"
                       value={personalSettings.facebook}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, facebook: e.target.value }))}
                     />
@@ -794,7 +871,6 @@ export default function SettingsPage() {
                     <Input
                       id="linkedin"
                       type="text"
-                      placeholder="Username or URL"
                       value={personalSettings.linkedin}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, linkedin: e.target.value }))}
                     />
@@ -804,7 +880,6 @@ export default function SettingsPage() {
                     <Input
                       id="tiktok"
                       type="text"
-                      placeholder="@username"
                       value={personalSettings.tiktok}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, tiktok: e.target.value }))}
                     />
@@ -814,7 +889,6 @@ export default function SettingsPage() {
                     <Input
                       id="youtube"
                       type="text"
-                      placeholder="Channel name or URL"
                       value={personalSettings.youtube}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, youtube: e.target.value }))}
                     />
@@ -824,7 +898,6 @@ export default function SettingsPage() {
                     <Input
                       id="github"
                       type="text"
-                      placeholder="Username"
                       value={personalSettings.github}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, github: e.target.value }))}
                     />
@@ -834,7 +907,6 @@ export default function SettingsPage() {
                     <Input
                       id="website"
                       type="url"
-                      placeholder="https://example.com"
                       value={personalSettings.website}
                       onChange={(e) => setPersonalSettings(prev => ({ ...prev, website: e.target.value }))}
                     />
@@ -842,6 +914,74 @@ export default function SettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-4">
                   Add your social media profiles and links. You can enter usernames or full URLs.
+                </p>
+              </div>
+
+              <div className="mt-6 pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-4">Currently Reading</h3>
+                <BookSearch
+                  selectedBook={null}
+                  onBookSelect={handleAddBook}
+                  onClearSelection={() => {}}
+                />
+                
+                {loadingBooks && (
+                  <div className="text-sm text-muted-foreground mt-4">Loading books...</div>
+                )}
+
+                {!loadingBooks && userBooks.length > 0 && (
+                  <div className="mt-4 space-y-3">
+                    <h4 className="text-sm font-medium text-gray-700">Your Reading List ({userBooks.length}):</h4>
+                    <div className="space-y-2">
+                      {userBooks.map((userBook) => (
+                        <Card key={userBook.id} className="border-green-200 bg-green-50">
+                          <CardContent className="p-3">
+                            <div className="flex items-start gap-3">
+                              {userBook.book?.imageLinks?.thumbnail && (
+                                <div className="relative w-12 h-16 shrink-0">
+                                  <img
+                                    src={userBook.book.imageLinks.thumbnail}
+                                    alt={`Cover of ${userBook.book.title}`}
+                                    className="object-cover rounded"
+                                    style={{ width: '100%', height: '100%' }}
+                                  />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <div className="font-medium text-green-800">{userBook.book?.title || 'Unknown Title'}</div>
+                                <div className="text-xs text-green-700">
+                                  by {userBook.book?.authors?.join(', ') || 'Unknown Author'}
+                                </div>
+                                {userBook.startedDate && (
+                                  <div className="text-xs text-green-600 mt-1">
+                                    Started {new Date(userBook.startedDate).toLocaleDateString()}
+                                  </div>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveBook(userBook.id)}
+                                className="text-red-600 hover:text-red-800 hover:bg-red-50 shrink-0"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!loadingBooks && userBooks.length === 0 && (
+                  <p className="text-sm text-muted-foreground mt-4">
+                    No books in your reading list yet. Search and add books above.
+                  </p>
+                )}
+
+                <p className="text-xs text-muted-foreground mt-4">
+                  Share what books you're currently reading with your family. This will be displayed on your profile.
                 </p>
               </div>
             </CardContent>
@@ -1107,7 +1247,6 @@ export default function SettingsPage() {
                       id="description"
                       value={groupSettings.description}
                       onChange={(e) => setGroupSettings(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Describe your family group..."
                       rows={3}
                     />
                   </div>
@@ -1253,7 +1392,6 @@ export default function SettingsPage() {
                 id="newGroupName"
                 value={newGroup.name}
                 onChange={(e) => setNewGroup(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="e.g., The Valerio Family"
               />
             </div>
 
@@ -1280,7 +1418,6 @@ export default function SettingsPage() {
                 id="newGroupDescription"
                 value={newGroup.description}
                 onChange={(e) => setNewGroup(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Describe your family group..."
                 rows={3}
               />
             </div>

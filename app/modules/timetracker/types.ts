@@ -77,3 +77,23 @@ export interface ProjectFormData {
   description?: string;
   color?: string;
 }
+
+// Import data types
+export interface ImportEntryData {
+  date: string; // YYYY-MM-DD format
+  startTime: string; // HH:MM format
+  endTime?: string; // HH:MM format (optional)
+  description?: string;
+}
+
+export interface ImportFormData {
+  projectId?: string;
+  csvData: ImportEntryData[];
+  fileName?: string;
+}
+
+export interface ImportValidationError {
+  row: number;
+  field: string;
+  message: string;
+}

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
             todos: true,
             plants: false,
             taskplanner: true,
+            kitchen: false,
           } as ModuleConfig,
         });
       }
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
       todos: true,
       plants: false,
       taskplanner: true,
+      kitchen: false,
     };
 
     return NextResponse.json({ enabledModules });

@@ -9,6 +9,8 @@ import {
   CreateProjectInput,
   CreateEntryInput,
   UpdateEntryInput,
+  ImportEntryData,
+  ImportValidationError,
 } from '../types';
 import { ProjectsService, EntriesService } from '../services';
 
@@ -46,8 +48,23 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
         EntriesService.getEntries(groupId),
       ]);
 
-      setProjects(projectsData);
-      setEntries(entriesData);
+      // Convert date strings back to Date objects since JSON serialization converts them to strings
+      const projectsWithDates = projectsData.map(project => ({
+        ...project,
+        createdAt: new Date(project.createdAt),
+        updatedAt: new Date(project.updatedAt),
+      }));
+
+      const entriesWithDates = entriesData.map(entry => ({
+        ...entry,
+        startTime: new Date(entry.startTime),
+        endTime: entry.endTime ? new Date(entry.endTime) : null,
+        createdAt: new Date(entry.createdAt),
+        updatedAt: new Date(entry.updatedAt),
+      }));
+
+      setProjects(projectsWithDates);
+      setEntries(entriesWithDates);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load data');
     } finally {
@@ -168,7 +185,15 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
         ...project,
         groupId,
       });
-      setProjects(prev => [newProject, ...prev]);
+
+      // Convert date strings to Date objects
+      const projectWithDates = {
+        ...newProject,
+        createdAt: new Date(newProject.createdAt),
+        updatedAt: new Date(newProject.updatedAt),
+      };
+
+      setProjects(prev => [projectWithDates, ...prev]);
       return newProject;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create project');
@@ -178,8 +203,12 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
 
   const updateProject = useCallback(async (id: string, updates: Partial<TimeTrackerProject>): Promise<void> => {
     try {
-      await ProjectsService.updateProject(id, updates);
-      setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
+      const updatedProject = await ProjectsService.updateProject(id, updates);
+      setProjects(prev => prev.map(p => p.id === id ? {
+        ...updatedProject,
+        createdAt: new Date(updatedProject.createdAt),
+        updatedAt: new Date(updatedProject.updatedAt),
+      } : p));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update project');
       throw err;
@@ -205,7 +234,17 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
         ...entry,
         groupId,
       });
-      setEntries(prev => [newEntry, ...prev]);
+
+      // Convert date strings to Date objects
+      const entryWithDates = {
+        ...newEntry,
+        startTime: new Date(newEntry.startTime),
+        endTime: newEntry.endTime ? new Date(newEntry.endTime) : null,
+        createdAt: new Date(newEntry.createdAt),
+        updatedAt: new Date(newEntry.updatedAt),
+      };
+
+      setEntries(prev => [entryWithDates, ...prev]);
       return newEntry;
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create entry');
@@ -216,7 +255,17 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
   const updateEntry = useCallback(async (id: string, updates: UpdateEntryInput): Promise<void> => {
     try {
       const updatedEntry = await EntriesService.updateEntry(id, updates);
-      setEntries(prev => prev.map(e => e.id === id ? updatedEntry : e));
+
+      // Convert date strings to Date objects
+      const entryWithDates = {
+        ...updatedEntry,
+        startTime: new Date(updatedEntry.startTime),
+        endTime: updatedEntry.endTime ? new Date(updatedEntry.endTime) : null,
+        createdAt: new Date(updatedEntry.createdAt),
+        updatedAt: new Date(updatedEntry.updatedAt),
+      };
+
+      setEntries(prev => prev.map(e => e.id === id ? entryWithDates : e));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update entry');
       throw err;
@@ -304,6 +353,162 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
     setTrackingState(prev => ({ ...prev, ...updates }));
   }, []);
 
+  // CSV parsing and validation
+  const parseCSV = useCallback((csvText: string): { data: ImportEntryData[], errors: ImportValidationError[] } => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    const data: ImportEntryData[] = [];
+    const errors: ImportValidationError[] = [];
+
+    // Skip header row if it exists
+    const startIndex = lines[0]?.toLowerCase().includes('date') ? 1 : 0;
+
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      const parts = line.split(',').map(part => part.trim().replace(/"/g, ''));
+      const rowNumber = i + 1;
+
+      if (parts.length < 3) {
+        errors.push({
+          row: rowNumber,
+          field: 'general',
+          message: 'Row must have at least 3 columns: date, start_time, end_time'
+        });
+        continue;
+      }
+
+      const [date, startTime, endTime, description] = parts;
+
+      // Validate date format (MM/DD/YYYY)
+      const dateRegex = /^\d{1,2}\/\d{1,2}\/\d{4}$/;
+      if (!dateRegex.test(date)) {
+        errors.push({
+          row: rowNumber,
+          field: 'date',
+          message: 'Date must be in MM/DD/YYYY format'
+        });
+      }
+
+      // Validate time format (12-hour with AM/PM)
+      const timeRegex = /^\d{1,2}:\d{2}\s+(AM|PM)$/i;
+      if (!timeRegex.test(startTime)) {
+        errors.push({
+          row: rowNumber,
+          field: 'startTime',
+          message: 'Start time must be in H:MM AM/PM format (e.g., 7:55 PM)'
+        });
+      }
+
+      if (endTime && !timeRegex.test(endTime)) {
+        errors.push({
+          row: rowNumber,
+          field: 'endTime',
+          message: 'End time must be in H:MM AM/PM format (e.g., 7:55 PM)'
+        });
+      }
+
+      // Additional validation: check if date is valid
+      if (dateRegex.test(date)) {
+        const [month, day, year] = date.split('/').map(Number);
+        const dateObj = new Date(year, month - 1, day); // month is 0-indexed in JS Date
+        if (isNaN(dateObj.getTime()) || dateObj.getMonth() !== month - 1 || dateObj.getDate() !== day || dateObj.getFullYear() !== year) {
+          errors.push({
+            row: rowNumber,
+            field: 'date',
+            message: 'Invalid date'
+          });
+        }
+      }
+
+      // If no errors for this row, add to data
+      if (!errors.some(error => error.row === rowNumber)) {
+        data.push({
+          date,
+          startTime,
+          endTime,
+          description: description || undefined,
+        });
+      }
+    }
+
+    return { data, errors };
+  }, []);
+
+  // Helper function to convert MM/DD/YYYY and H:MM AM/PM to Date object
+  const convertToDateTime = useCallback((dateStr: string, timeStr: string): Date => {
+    // Parse MM/DD/YYYY date
+    const [month, day, year] = dateStr.split('/').map(Number);
+
+    // Parse H:MM AM/PM time
+    const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})\s+(AM|PM)$/i);
+    if (!timeMatch) throw new Error('Invalid time format');
+
+    let [, hourStr, minuteStr, period] = timeMatch;
+    let hour = parseInt(hourStr);
+    const minute = parseInt(minuteStr);
+
+    // Convert 12-hour to 24-hour format
+    if (period.toUpperCase() === 'PM' && hour !== 12) {
+      hour += 12;
+    } else if (period.toUpperCase() === 'AM' && hour === 12) {
+      hour = 0;
+    }
+
+    // Create Date object
+    return new Date(year, month - 1, day, hour, minute);
+  }, []);
+
+  // Import entries
+  const importEntries = useCallback(async (
+    csvText: string,
+    projectId?: string
+  ): Promise<{ success: boolean; importedCount: number; errors: ImportValidationError[] }> => {
+    try {
+      const { data: csvData, errors: parseErrors } = parseCSV(csvText);
+
+      if (parseErrors.length > 0) {
+        return { success: false, importedCount: 0, errors: parseErrors };
+      }
+
+      // Convert CSV data to entry inputs
+      const entriesToImport: CreateEntryInput[] = csvData.map(entryData => {
+        const startDateTime = convertToDateTime(entryData.date, entryData.startTime);
+        let endDateTime: Date | undefined;
+
+        if (entryData.endTime) {
+          endDateTime = convertToDateTime(entryData.date, entryData.endTime);
+        }
+
+        return {
+          startTime: startDateTime,
+          endTime: endDateTime,
+          description: entryData.description,
+          projectId: projectId,
+        };
+      });
+
+      // Import entries via service
+      const importedEntries = await EntriesService.importEntries(entriesToImport, groupId);
+
+      // Add imported entries to local state
+      const entriesWithDates = importedEntries.map(entry => ({
+        ...entry,
+        startTime: new Date(entry.startTime),
+        endTime: entry.endTime ? new Date(entry.endTime) : null,
+        createdAt: new Date(entry.createdAt),
+        updatedAt: new Date(entry.updatedAt),
+      }));
+
+      setEntries(prev => [...entriesWithDates, ...prev]);
+
+      return { success: true, importedCount: importedEntries.length, errors: [] };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to import entries');
+      return { success: false, importedCount: 0, errors: [{ row: 0, field: 'general', message: err instanceof Error ? err.message : 'Import failed' }] };
+    }
+  }, [parseCSV, groupId]);
+
   return {
     // Data
     projects,
@@ -334,6 +539,7 @@ export function useTimeTracker({ groupId }: UseTimeTrackerProps = {}) {
     createManualEntry,
     updateEntry,
     deleteEntry,
+    importEntries,
 
     // Statistics
     calculateStats,

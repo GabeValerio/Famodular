@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     // CRITICAL: Filter by groupId FIRST to ensure proper data isolation
     if (groupId) {
-      // Group view: Show ALL projects for this specific group (NO user_id filter)
+      // Group view: Show ALL active projects for this specific group (NO user_id filter)
       query = query.eq('group_id', groupId);
     } else {
       // Self view: Filter by user_id AND group_id IS NULL
