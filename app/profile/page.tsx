@@ -266,7 +266,7 @@ export default function ProfilePage() {
                   {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </span>
               </div>
-              {profile.currentlyReadingTitle && profile.currentlyReading && profile.currentlyReading.length > 0 && (
+              {profile.currentlyReading && profile.currentlyReading.length > 0 && (
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Books reading</span>
                   <Badge variant="secondary">{profile.currentlyReading.length}</Badge>

@@ -161,6 +161,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           taskplanner: false,
           notepad: false,
           timetracker: false,
+          kitchen: false,
         };
       }
 
@@ -187,6 +188,7 @@ export function GroupProvider({ children }: { children: ReactNode }) {
           taskplanner: true,
           notepad: true,
           timetracker: false,
+          kitchen: false,
         },
       } as User;
       setCurrentUser(fallbackUser);

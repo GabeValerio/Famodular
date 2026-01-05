@@ -10,13 +10,17 @@ import {
 } from '../types';
 
 // Check if Google Gemini API key is configured
-const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+const getApiKey = () => {
+  return process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
+};
 
-if (!apiKey) {
-  throw new Error('Google Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable.');
-}
-
-const genAI = new GoogleGenAI(apiKey);
+const getGenAI = () => {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    throw new Error('Google Gemini API key is not configured. Please set NEXT_PUBLIC_GEMINI_API_KEY or GOOGLE_GEMINI_API_KEY environment variable.');
+  }
+  return new GoogleGenAI({ apiKey });
+};
 
 /**
  * Analyze inventory items from a photo using Gemini Vision
@@ -32,7 +36,7 @@ export const analyzeInventoryPhoto = async (imageData: string): Promise<{
   suggestions: string[];
 }> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro-vision' });
+    const genAI = getGenAI();
 
     const prompt = `Analyze this kitchen inventory photo and identify all food items visible.
 
@@ -54,24 +58,43 @@ Return a JSON response with this exact structure:
 
 Be specific about quantities and units. Only include items you can clearly identify.`;
 
-    const imagePart = {
-      inlineData: {
-        data: imageData,
-        mimeType: 'image/jpeg'
-      }
-    };
+    // Remove data: URL prefix if present
+    const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
 
-    const result = await model.generateContent([prompt, imagePart]);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: prompt },
+          {
+            inlineData: {
+              data: base64Data,
+              mimeType: 'image/jpeg'
+            }
+          }
+        ]
+      }],
+      config: { responseMimeType: 'application/json' }
+    });
 
-    // Clean the response text to extract JSON
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse AI response as JSON');
+    const text = result.text;
+    if (!text) {
+      throw new Error('No response text from AI');
     }
 
-    const parsed = JSON.parse(jsonMatch[0]);
+    // Parse JSON response (API returns JSON directly when responseMimeType is set)
+    let parsed;
+    try {
+      parsed = typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      // Fallback: try to extract JSON from text
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse AI response as JSON');
+      }
+      parsed = JSON.parse(jsonMatch[0]);
+    }
 
     // Validate the response structure
     if (!parsed.items || !Array.isArray(parsed.items)) {
@@ -94,7 +117,7 @@ Be specific about quantities and units. Only include items you can clearly ident
  */
 export const generateMealPlan = async (request: MealPlanningRequest): Promise<MealPlan> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const genAI = getGenAI();
 
     const prompt = `Create a ${request.numberOfDays}-day meal plan for ${request.servings} people with these preferences: ${request.dietaryPreferences.join(', ')}
 
@@ -128,17 +151,28 @@ Return a JSON response with this exact structure:
 
 Focus on healthy, balanced meals that use the available ingredients. Include variety and nutritional balance.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
 
-    // Clean and parse JSON response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse meal plan response as JSON');
+    const text = result.text;
+    if (!text) {
+      throw new Error('No response text from AI');
     }
 
-    const mealPlanData = JSON.parse(jsonMatch[0]);
+    // Parse JSON response
+    let mealPlanData;
+    try {
+      mealPlanData = typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse meal plan response as JSON');
+      }
+      mealPlanData = JSON.parse(jsonMatch[0]);
+    }
 
     return {
       id: crypto.randomUUID(),
@@ -164,7 +198,7 @@ export const generateRecipe = async (
   dietaryPreferences: DietaryPreference[] = []
 ): Promise<Recipe> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const genAI = getGenAI();
 
     const prompt = `Create a detailed recipe for: "${mealIdea}"
 
@@ -202,16 +236,28 @@ Return a JSON response with this exact structure:
 
 Make the recipe practical, healthy, and use the available ingredients where possible. Include detailed instructions.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse recipe response as JSON');
+    const text = result.text;
+    if (!text) {
+      throw new Error('No response text from AI');
     }
 
-    const recipeData = JSON.parse(jsonMatch[0]);
+    // Parse JSON response
+    let recipeData;
+    try {
+      recipeData = typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse recipe response as JSON');
+      }
+      recipeData = JSON.parse(jsonMatch[0]);
+    }
 
     return {
       id: crypto.randomUUID(),
@@ -233,7 +279,7 @@ export const analyzeInventory = async (
   inventory: KitchenInventoryItem[]
 ): Promise<InventoryAnalysis> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const genAI = getGenAI();
 
     const inventoryText = inventory.map(item =>
       `${item.name} (${item.quantity} ${item.unit}) in ${item.location} - expires ${item.expirationDate || 'unknown'}`
@@ -254,16 +300,28 @@ Return a JSON response with this exact structure:
 
 Be specific and actionable in your suggestions. Consider food safety and waste reduction.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse inventory analysis response as JSON');
+    const text = result.text;
+    if (!text) {
+      throw new Error('No response text from AI');
     }
 
-    const analysis = JSON.parse(jsonMatch[0]);
+    // Parse JSON response
+    let analysis;
+    try {
+      analysis = typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse inventory analysis response as JSON');
+      }
+      analysis = JSON.parse(jsonMatch[0]);
+    }
 
     // Map back to actual inventory items
     const expiringSoon = inventory.filter(item =>
@@ -307,7 +365,7 @@ export const generateGrocerySuggestions = async (
   reasoning: string;
 }> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const genAI = getGenAI();
 
     const mealIngredients = mealPlan.meals.flatMap(meal =>
       meal.ingredients.map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`)
@@ -340,16 +398,27 @@ Return a JSON response with this exact structure:
 
 Be specific about quantities and consider what might already be in inventory. Estimate realistic costs.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error('Could not parse grocery suggestions response as JSON');
+    const text = result.text;
+    if (!text) {
+      throw new Error('No response text from AI');
     }
 
-    return JSON.parse(jsonMatch[0]);
+    // Parse JSON response
+    try {
+      return typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('Could not parse grocery suggestions response as JSON');
+      }
+      return JSON.parse(jsonMatch[0]);
+    }
 
   } catch (error) {
     console.error('Error generating grocery suggestions:', error);
@@ -362,7 +431,7 @@ Be specific about quantities and consider what might already be in inventory. Es
  */
 export const getNutritionalInfo = async (ingredientName: string): Promise<NutritionalInfo | null> => {
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const genAI = getGenAI();
 
     const prompt = `Provide nutritional information for "${ingredientName}" per 100g serving.
 
@@ -379,16 +448,28 @@ Return a JSON response with this exact structure:
 
 Use approximate values based on common nutritional data. Return null if you cannot provide accurate information.`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-2.0-flash-exp',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      config: { responseMimeType: 'application/json' }
+    });
 
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
+    const text = result.text;
+    if (!text) {
       return null;
     }
 
-    const nutrition = JSON.parse(jsonMatch[0]);
+    // Parse JSON response
+    let nutrition;
+    try {
+      nutrition = typeof text === 'string' ? JSON.parse(text) : text;
+    } catch {
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        return null;
+      }
+      nutrition = JSON.parse(jsonMatch[0]);
+    }
 
     // Validate that we got numeric values
     if (typeof nutrition.calories !== 'number') {

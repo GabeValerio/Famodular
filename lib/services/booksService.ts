@@ -19,8 +19,32 @@ export interface BookSearchResult {
   ratingsCount?: number;
 }
 
+// Google Books API response structure
+interface GoogleBooksItem {
+  id: string;
+  volumeInfo: {
+    title: string;
+    authors?: string[];
+    description?: string;
+    imageLinks?: {
+      smallThumbnail?: string;
+      thumbnail?: string;
+      small?: string;
+      medium?: string;
+      large?: string;
+      extraLarge?: string;
+    };
+    publishedDate?: string;
+    publisher?: string;
+    pageCount?: number;
+    categories?: string[];
+    averageRating?: number;
+    ratingsCount?: number;
+  };
+}
+
 export interface BookSearchResponse {
-  items: BookSearchResult[];
+  items?: GoogleBooksItem[];
   totalItems: number;
   kind: string;
 }
@@ -52,7 +76,7 @@ export const searchBooks = async (query: string, maxResults: number = 10): Promi
       return [];
     }
 
-    return data.items.map(item => ({
+    return data.items.map((item: GoogleBooksItem): BookSearchResult => ({
       id: item.id,
       title: item.volumeInfo.title,
       authors: item.volumeInfo.authors || ['Unknown Author'],
