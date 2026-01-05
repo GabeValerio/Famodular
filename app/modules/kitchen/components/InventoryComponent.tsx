@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { KitchenInventoryItem, KitchenLocation, KitchenItemCategory, InventoryAnalysis } from '../types';
 import { useInventory } from '../hooks';
+import { PhotoUploadComponent } from './PhotoUploadComponent';
 
 interface InventoryComponentProps {
   groupId: string;
@@ -493,110 +494,3 @@ function InventoryGrid({
   );
 }
 
-function PhotoUploadComponent({ onPhotoTaken }: { onPhotoTaken: (imageData: string) => void }) {
-  const [stream, setStream] = useState<MediaStream | null>(null);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  const startCamera = async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-      }
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-    }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current) {
-      const canvas = document.createElement('canvas');
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(videoRef.current, 0, 0);
-        const imageData = canvas.toDataURL('image/jpeg');
-        setCapturedImage(imageData);
-        stopCamera();
-      }
-    }
-  };
-
-  const handleConfirm = () => {
-    if (capturedImage) {
-      onPhotoTaken(capturedImage);
-      setCapturedImage(null);
-    }
-  };
-
-  const handleRetake = () => {
-    setCapturedImage(null);
-    startCamera();
-  };
-
-  useEffect(() => {
-    return () => {
-      stopCamera();
-    };
-  }, []);
-
-  return (
-    <div className="space-y-4">
-      {!capturedImage ? (
-        <div className="space-y-4">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-64 bg-black rounded-lg object-cover"
-          />
-          <div className="flex gap-2">
-            {!stream ? (
-              <Button onClick={startCamera} className="flex-1">
-                <Camera className="h-4 w-4 mr-2" />
-                Start Camera
-              </Button>
-            ) : (
-              <Button onClick={capturePhoto} className="flex-1">
-                <Camera className="h-4 w-4 mr-2" />
-                Capture Photo
-              </Button>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <img
-            src={capturedImage}
-            alt="Captured"
-            className="w-full h-64 object-cover rounded-lg"
-          />
-          <p className="text-sm text-muted-foreground text-center">
-            AI will analyze this image to identify food items
-          </p>
-          <div className="flex gap-2">
-            <Button onClick={handleConfirm} className="flex-1">
-              Add Items
-            </Button>
-            <Button variant="outline" onClick={handleRetake}>
-              Retake Photo
-            </Button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
