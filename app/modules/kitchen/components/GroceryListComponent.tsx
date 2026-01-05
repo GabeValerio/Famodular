@@ -59,6 +59,7 @@ export function GroceryListComponent({ groupId }: GroceryListComponentProps) {
         name: newListName,
         groupId,
         createdBy: 'current-user', // Should come from auth
+        isCompleted: false,
       });
       setNewListName('');
       setIsCreateListDialogOpen(false);
