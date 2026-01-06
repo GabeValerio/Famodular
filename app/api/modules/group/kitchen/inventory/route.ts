@@ -22,8 +22,9 @@ export async function GET(request: NextRequest) {
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', groupId)
-      .eq('userId', session.user.id)
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
@@ -39,7 +40,24 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json(inventory);
+    // Transform snake_case to camelCase for frontend
+    const transformedInventory = (inventory || []).map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      location: item.location,
+      quantity: item.quantity,
+      unit: item.unit,
+      expirationDate: item.expiration_date || null,
+      addedDate: item.added_date,
+      addedBy: item.added_by,
+      groupId: item.group_id,
+      imageUrl: item.image_url || null,
+      nutritionalInfo: item.nutritional_info || null,
+      barcode: item.barcode || null,
+    }));
+
+    return NextResponse.json(transformedInventory);
   } catch (error) {
     console.error('Error fetching inventory:', error);
     return NextResponse.json(
@@ -67,8 +85,9 @@ export async function POST(request: NextRequest) {
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', groupId)
-      .eq('userId', session.user.id)
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
@@ -94,7 +113,24 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json(item, { status: 201 });
+    // Transform snake_case to camelCase for frontend
+    const transformedItem = {
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      location: item.location,
+      quantity: item.quantity,
+      unit: item.unit,
+      expirationDate: item.expiration_date || null,
+      addedDate: item.added_date,
+      addedBy: item.added_by,
+      groupId: item.group_id,
+      imageUrl: item.image_url || null,
+      nutritionalInfo: item.nutritional_info || null,
+      barcode: item.barcode || null,
+    };
+
+    return NextResponse.json(transformedItem, { status: 201 });
   } catch (error) {
     console.error('Error adding inventory item:', error);
     return NextResponse.json(

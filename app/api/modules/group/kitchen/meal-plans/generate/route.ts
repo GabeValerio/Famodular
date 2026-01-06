@@ -22,18 +22,45 @@ export async function POST(request: NextRequest) {
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', groupId)
-      .eq('userId', session.user.id)
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Fetch current inventory items for this group
+    const { data: inventoryItems, error: inventoryError } = await supabase
+      .from('kitchen_inventory')
+      .select('name, quantity, unit, category')
+      .eq('group_id', groupId);
+
+    if (inventoryError) {
+      console.error('Error fetching inventory:', inventoryError);
+      // Continue without inventory if there's an error
+    }
+
+    // Format inventory items as available ingredients
+    // Format: "2 cups rice", "1 lb chicken", etc.
+    const inventoryIngredients = (inventoryItems || []).map(item => {
+      const quantity = item.quantity ? `${item.quantity} ` : '';
+      const unit = item.unit ? `${item.unit} ` : '';
+      return `${quantity}${unit}${item.name}`.trim();
+    });
+
+    // Merge manually provided ingredients with inventory items
+    // Remove duplicates and combine both lists
+    const allAvailableIngredients = Array.from(new Set([
+      ...inventoryIngredients,
+      ...(availableIngredients || [])
+    ]));
+
     // Generate meal plan with AI
     const mealPlanRequest = {
       dietaryPreferences: dietaryPreferences || [],
-      availableIngredients: availableIngredients || [],
+      availableIngredients: allAvailableIngredients,
       numberOfDays: numberOfDays || 7,
       servings: servings || 4,
       budget,

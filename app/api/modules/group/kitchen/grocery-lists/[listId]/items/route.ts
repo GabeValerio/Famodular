@@ -36,8 +36,9 @@ export async function POST(
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', list.group_id)
-      .eq('userId', session.user.id)
+      .eq('group_id', list.group_id)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {

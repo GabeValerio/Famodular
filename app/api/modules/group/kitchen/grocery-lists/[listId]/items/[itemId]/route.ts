@@ -31,8 +31,9 @@ export async function PATCH(
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', item.group_id)
-      .eq('userId', session.user.id)
+      .eq('group_id', item.group_id)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
@@ -86,8 +87,9 @@ export async function DELETE(
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', item.group_id)
-      .eq('userId', session.user.id)
+      .eq('group_id', item.group_id)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {

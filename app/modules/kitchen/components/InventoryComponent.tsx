@@ -22,7 +22,8 @@ import {
   Trash2,
   Edit,
   Calendar,
-  Search
+  Search,
+  Loader2
 } from 'lucide-react';
 import { KitchenInventoryItem, KitchenLocation, KitchenItemCategory, InventoryAnalysis } from '../types';
 import { useInventory } from '../hooks';
@@ -71,8 +72,17 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false);
+  const [isAnalyzingPhotos, setIsAnalyzingPhotos] = useState(false);
   const [editingItem, setEditingItem] = useState<KitchenInventoryItem | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Load inventory items when component mounts or groupId changes
+  useEffect(() => {
+    if (groupId) {
+      console.log('InventoryComponent: Loading items for groupId:', groupId);
+      loadItems(groupId);
+    }
+  }, [groupId, loadItems]);
 
   // Form state for adding/editing items
   const [formData, setFormData] = useState({
@@ -143,6 +153,8 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
         return;
       }
 
+      setIsAnalyzingPhotos(true);
+      
       // Process each image
       for (const image of imageData) {
         console.log('InventoryComponent: Processing image', image.slice(0, 50) + '...');
@@ -155,6 +167,8 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
       console.error('=== PHOTO UPLOAD ERROR ===');
       console.error('Error adding items from photos:', error);
       alert(`Failed to analyze photos: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsAnalyzingPhotos(false);
     }
   };
 
@@ -223,10 +237,21 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
               <DialogHeader>
                 <DialogTitle>Add Items by Photo</DialogTitle>
               </DialogHeader>
-              <PhotoUploadComponent onPhotoTaken={(images) => {
-                console.log('InventoryComponent: onPhotoTaken callback called with', images.length, 'images');
-                handlePhotoUpload(images);
-              }} />
+              {isAnalyzingPhotos ? (
+                <div className="flex flex-col items-center justify-center py-8 space-y-4">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground text-center">
+                    Analyzing photos with AI...
+                    <br />
+                    <span className="text-xs">This may take a few moments</span>
+                  </p>
+                </div>
+              ) : (
+                <PhotoUploadComponent onPhotoTaken={(images) => {
+                  console.log('InventoryComponent: onPhotoTaken callback called with', images.length, 'images');
+                  handlePhotoUpload(images);
+                }} />
+              )}
             </DialogContent>
           </Dialog>
 

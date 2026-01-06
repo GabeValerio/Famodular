@@ -16,6 +16,18 @@ export async function PATCH(
     const { id } = params;
     const updates = await request.json();
 
+    // Transform camelCase to snake_case for database
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
+    if (updates.quantity !== undefined) dbUpdates.quantity = updates.quantity;
+    if (updates.unit !== undefined) dbUpdates.unit = updates.unit;
+    if (updates.expirationDate !== undefined) dbUpdates.expiration_date = updates.expirationDate;
+    if (updates.imageUrl !== undefined) dbUpdates.image_url = updates.imageUrl;
+    if (updates.nutritionalInfo !== undefined) dbUpdates.nutritional_info = updates.nutritionalInfo;
+    if (updates.barcode !== undefined) dbUpdates.barcode = updates.barcode;
+
     // First, get the item to verify ownership
     const { data: item, error: fetchError } = await supabase
       .from('kitchen_inventory')
@@ -31,8 +43,9 @@ export async function PATCH(
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', item.group_id)
-      .eq('userId', session.user.id)
+      .eq('group_id', item.group_id)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
@@ -42,14 +55,31 @@ export async function PATCH(
     // Update the item
     const { data: updatedItem, error } = await supabase
       .from('kitchen_inventory')
-      .update(updates)
+      .update(dbUpdates)
       .eq('id', id)
       .select()
       .single();
 
     if (error) throw error;
 
-    return NextResponse.json(updatedItem);
+    // Transform snake_case to camelCase for frontend
+    const transformedItem = {
+      id: updatedItem.id,
+      name: updatedItem.name,
+      category: updatedItem.category,
+      location: updatedItem.location,
+      quantity: updatedItem.quantity,
+      unit: updatedItem.unit,
+      expirationDate: updatedItem.expiration_date || null,
+      addedDate: updatedItem.added_date,
+      addedBy: updatedItem.added_by,
+      groupId: updatedItem.group_id,
+      imageUrl: updatedItem.image_url || null,
+      nutritionalInfo: updatedItem.nutritional_info || null,
+      barcode: updatedItem.barcode || null,
+    };
+
+    return NextResponse.json(transformedItem);
   } catch (error) {
     console.error('Error updating inventory item:', error);
     return NextResponse.json(
@@ -86,8 +116,9 @@ export async function DELETE(
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', item.group_id)
-      .eq('userId', session.user.id)
+      .eq('group_id', item.group_id)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {

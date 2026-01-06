@@ -39,12 +39,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'imageData and groupId required' }, { status: 400 });
     }
 
+    // Verify user exists in the database
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('id', session.user.id)
+      .single();
+
+    if (userError || !user) {
+      console.error('User not found in database:', session.user.id, userError);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     // Verify user has access to this group
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', groupId)
-      .eq('userId', session.user.id)
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
@@ -87,13 +100,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Add detected items to inventory
+    // Use the verified user.id from the database query to ensure type consistency
     const itemsToAdd = allDetectedItems.map(item => ({
       name: item.name,
       category: mapGeminiCategoryToDbCategory(item.category),
       location: 'Counter', // Default location, user can change later
       quantity: item.quantity,
       unit: item.unit,
-      added_by: session.user.id, // Always use authenticated user ID
+      added_by: user.id, // Use the verified user ID from database
       group_id: groupId,
     }));
 

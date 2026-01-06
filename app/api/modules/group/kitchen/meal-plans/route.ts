@@ -23,8 +23,9 @@ export async function GET(request: NextRequest) {
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', groupId)
-      .eq('userId', session.user.id)
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {
@@ -74,8 +75,9 @@ export async function POST(request: NextRequest) {
     const { data: groupMember } = await supabase
       .from('group_members')
       .select('*')
-      .eq('groupId', groupId)
-      .eq('userId', session.user.id)
+      .eq('group_id', groupId)
+      .eq('user_id', session.user.id)
+      .eq('is_active', true)
       .single();
 
     if (!groupMember) {

@@ -308,7 +308,7 @@ export function MealPlanComponent({ groupId }: MealPlanComponentProps) {
                 </div>
 
                 <div>
-                  <Label htmlFor="ingredients">Available ingredients (optional)</Label>
+                  <Label htmlFor="ingredients">Additional ingredients (optional)</Label>
                   <Textarea
                     id="ingredients"
                     value={mealPlanForm.availableIngredients.join(', ')}
@@ -319,6 +319,9 @@ export function MealPlanComponent({ groupId }: MealPlanComponentProps) {
                     placeholder="e.g., chicken, rice, broccoli, garlic, soy sauce"
                     rows={3}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Items from your inventory will be automatically included. Add any additional ingredients you have here.
+                  </p>
                 </div>
 
                 <div>

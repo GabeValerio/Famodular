@@ -65,7 +65,10 @@ export const kitchenInventoryService = {
       body: JSON.stringify({ imageData, groupId, addedBy }),
     });
     if (!response.ok) throw new Error('Failed to add items from photo');
-    return response.json();
+    const result = await response.json();
+    // API returns { items: [...], suggestions: [...], message: "..." }
+    // Extract the items array
+    return result.items || [];
   },
 };
 
