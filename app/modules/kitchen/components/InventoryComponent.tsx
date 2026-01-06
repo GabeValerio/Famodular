@@ -27,6 +27,7 @@ import {
 import { KitchenInventoryItem, KitchenLocation, KitchenItemCategory, InventoryAnalysis } from '../types';
 import { useInventory } from '../hooks';
 import { PhotoUploadComponent } from './PhotoUploadComponent';
+import { useGroup } from '@/lib/GroupContext';
 
 interface InventoryComponentProps {
   groupId: string;
@@ -49,6 +50,9 @@ const locationColors = {
 };
 
 export function InventoryComponent({ groupId }: InventoryComponentProps) {
+  console.log('InventoryComponent: Component mounted with groupId:', groupId);
+  const { currentUser } = useGroup();
+  console.log('InventoryComponent: currentUser:', currentUser);
   const {
     items,
     analysis,
@@ -97,7 +101,7 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
       await addItem({
         ...formData,
         groupId,
-        addedBy: 'current-user', // This should come from auth context
+        addedBy: currentUser?.id || 'unknown',
       });
       setIsAddDialogOpen(false);
       resetForm();
@@ -128,14 +132,29 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
   };
 
   const handlePhotoUpload = async (imageData: string[]) => {
+    console.log('=== PHOTO UPLOAD START ===');
+    console.log('InventoryComponent: Processing', imageData.length, 'images');
+    console.log('InventoryComponent: currentUser exists:', !!currentUser);
+    console.log('InventoryComponent: currentUser.id:', currentUser?.id);
     try {
+      if (!currentUser?.id) {
+        console.log('InventoryComponent: No user ID found, showing alert');
+        alert('You must be logged in to add items from photos');
+        return;
+      }
+
       // Process each image
       for (const image of imageData) {
-        await addFromPhoto(image, groupId, 'current-user');
+        console.log('InventoryComponent: Processing image', image.slice(0, 50) + '...');
+        await addFromPhoto(image, groupId, currentUser.id);
       }
       setIsPhotoDialogOpen(false);
+      console.log('InventoryComponent: Successfully processed all images');
+      console.log('=== PHOTO UPLOAD SUCCESS ===');
     } catch (error) {
+      console.error('=== PHOTO UPLOAD ERROR ===');
       console.error('Error adding items from photos:', error);
+      alert(`Failed to analyze photos: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -187,9 +206,15 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
           <p className="text-muted-foreground">Track what's in your fridge, pantry, and cabinets</p>
         </div>
         <div className="flex gap-2">
-          <Dialog open={isPhotoDialogOpen} onOpenChange={setIsPhotoDialogOpen}>
+          <Dialog open={isPhotoDialogOpen} onOpenChange={(open) => {
+            console.log('InventoryComponent: Photo dialog state changed to:', open);
+            setIsPhotoDialogOpen(open);
+          }}>
             <DialogTrigger asChild>
-              <Button variant="outline">
+              <Button
+                variant="outline"
+                onClick={() => console.log('InventoryComponent: Add by Photo button clicked')}
+              >
                 <Camera className="h-4 w-4 mr-2" />
                 Add by Photo
               </Button>
@@ -198,7 +223,10 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
               <DialogHeader>
                 <DialogTitle>Add Items by Photo</DialogTitle>
               </DialogHeader>
-              <PhotoUploadComponent onPhotoTaken={handlePhotoUpload} />
+              <PhotoUploadComponent onPhotoTaken={(images) => {
+                console.log('InventoryComponent: onPhotoTaken callback called with', images.length, 'images');
+                handlePhotoUpload(images);
+              }} />
             </DialogContent>
           </Dialog>
 

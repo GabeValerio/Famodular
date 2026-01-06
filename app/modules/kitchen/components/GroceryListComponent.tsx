@@ -9,6 +9,7 @@ import { Checkbox } from '@/app/components/ui/checkbox';
 import { Badge } from '@/app/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/app/components/ui/dialog';
 import { Textarea } from '@/app/components/ui/textarea';
+import { useGroup } from '@/lib/GroupContext';
 import {
   Plus,
   ShoppingCart,
@@ -28,6 +29,7 @@ interface GroceryListComponentProps {
 }
 
 export function GroceryListComponent({ groupId }: GroceryListComponentProps) {
+  const { currentUser } = useGroup();
   const {
     groceryLists,
     loading,
@@ -58,7 +60,7 @@ export function GroceryListComponent({ groupId }: GroceryListComponentProps) {
       await createGroceryList({
         name: newListName,
         groupId,
-        createdBy: 'current-user', // Should come from auth
+        createdBy: currentUser?.id || 'unknown',
         isCompleted: false,
       });
       setNewListName('');
@@ -74,7 +76,7 @@ export function GroceryListComponent({ groupId }: GroceryListComponentProps) {
       await addGroceryItem(listId, {
         ...newItem,
         groupId,
-        addedBy: 'current-user', // Should come from auth
+        addedBy: currentUser?.id || 'unknown',
       });
       setNewItem({
         name: '',

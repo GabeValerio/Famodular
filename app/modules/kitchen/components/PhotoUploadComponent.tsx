@@ -11,12 +11,15 @@ interface PhotoUploadComponentProps {
 
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
+    console.log('compressImage: Starting compression for', file.name, 'size:', file.size);
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = (event) => {
+      console.log('compressImage: File loaded as data URL');
       const img = new Image();
       img.src = event.target?.result as string;
       img.onload = () => {
+        console.log('compressImage: Image loaded, dimensions:', img.width, 'x', img.height);
         const canvas = document.createElement('canvas');
         const MAX_WIDTH = 1200;
         const MAX_HEIGHT = 1200;
@@ -35,16 +38,22 @@ const compressImage = async (file: File): Promise<File> => {
           }
         }
 
+        console.log('compressImage: Resizing to', width, 'x', height);
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
-        ctx?.drawImage(img, 0, 0, width, height);
-        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+
         canvas.toBlob((blob) => {
           if (!blob) {
             reject(new Error('Canvas is empty'));
             return;
           }
+          console.log('compressImage: Blob created, size:', blob.size);
           const compressedFile = new File([blob], file.name, {
             type: 'image/jpeg',
             lastModified: Date.now(),
@@ -52,20 +61,32 @@ const compressImage = async (file: File): Promise<File> => {
           resolve(compressedFile);
         }, 'image/jpeg', 0.8);
       };
-      img.onerror = (error) => reject(error);
+      img.onerror = (error) => {
+        console.error('compressImage: Image load error', error);
+        reject(error);
+      };
     };
-    reader.onerror = (error) => reject(error);
+    reader.onerror = (error) => {
+      console.error('compressImage: FileReader error', error);
+      reject(error);
+    };
   });
 };
 
 export function PhotoUploadComponent({ onPhotoTaken, onCancel }: PhotoUploadComponentProps) {
+  console.log('PhotoUploadComponent: Component rendered');
   const [capturedImages, setCapturedImages] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('PhotoUploadComponent: handleFileUpload called');
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    console.log('PhotoUploadComponent: files selected:', files?.length || 0);
+    if (!files || files.length === 0) {
+      console.log('PhotoUploadComponent: No files selected, returning');
+      return;
+    }
 
     setIsProcessing(true);
     try {
@@ -82,8 +103,11 @@ export function PhotoUploadComponent({ onPhotoTaken, onCancel }: PhotoUploadComp
           let fileToProcess = file;
           if (file.size > 1 * 1024 * 1024) { // If larger than 1MB
             try {
+              console.log('PhotoUploadComponent: Compressing image', file.name);
               fileToProcess = await compressImage(file);
+              console.log('PhotoUploadComponent: Compressed from', file.size, 'to', fileToProcess.size);
             } catch (compressError) {
+              console.error('PhotoUploadComponent: Compression failed for', file.name, compressError);
               // Continue with original file if compression fails
             }
           }
@@ -102,6 +126,7 @@ export function PhotoUploadComponent({ onPhotoTaken, onCancel }: PhotoUploadComp
             reader.readAsDataURL(fileToProcess);
           });
 
+          console.log('PhotoUploadComponent: Converted to base64, length:', base64String.length);
           processedImages.push(base64String);
         } catch (error) {
           console.error(`Error processing image ${file.name}:`, error);
@@ -128,6 +153,7 @@ export function PhotoUploadComponent({ onPhotoTaken, onCancel }: PhotoUploadComp
 
   const handleConfirm = () => {
     if (capturedImages.length > 0) {
+      console.log('PhotoUploadComponent: Analyzing', capturedImages.length, 'images');
       onPhotoTaken(capturedImages);
       setCapturedImages([]);
     }
@@ -144,7 +170,10 @@ export function PhotoUploadComponent({ onPhotoTaken, onCancel }: PhotoUploadComp
       {capturedImages.length === 0 && (
         <div className="space-y-4">
           <Button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => {
+              console.log('PhotoUploadComponent: Upload button clicked');
+              fileInputRef.current?.click();
+            }}
             className="w-full bg-green-600 hover:bg-green-700 text-white"
             disabled={isProcessing}
           >
@@ -219,7 +248,14 @@ export function PhotoUploadComponent({ onPhotoTaken, onCancel }: PhotoUploadComp
 
           {/* Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <Button onClick={handleConfirm} className="flex-1" disabled={capturedImages.length === 0}>
+            <Button
+              onClick={() => {
+                console.log('PhotoUploadComponent: Analyze button clicked');
+                handleConfirm();
+              }}
+              className="flex-1"
+              disabled={capturedImages.length === 0}
+            >
               <Check className="h-4 w-4 mr-2" />
               Analyze {capturedImages.length} Photo{capturedImages.length !== 1 ? 's' : ''}
             </Button>

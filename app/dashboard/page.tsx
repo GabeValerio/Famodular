@@ -5,8 +5,8 @@ import { useDashboardWidgets } from "@/app/modules/shared/hooks/useDashboardWidg
 import { Card } from "@/app/components/ui/card";
 // Import modules to register their widgets
 import "@/app/modules/shared";
-// Import shared modules to register widgets
-import "@/app/modules/shared";
+// Import shared widgets to ensure they are registered
+import "@/app/modules/shared/widgets";
 
 export default function DashboardPage() {
   const { currentGroup } = useGroup();

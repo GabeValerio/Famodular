@@ -10,6 +10,7 @@ import CartDrawer from '@/app/components/CartDrawer';
 import { useCart } from '@/lib/CartContext';
 
 export default function HomePage() {
+  console.log('HomePage: Component loaded - testing logging system');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const { itemCount } = useCart();

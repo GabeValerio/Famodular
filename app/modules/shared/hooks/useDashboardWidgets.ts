@@ -12,12 +12,18 @@ export function useDashboardWidgets() {
   // Get widgets for enabled modules
   const availableWidgets = useMemo(() => {
     const allWidgets = getAllWidgets();
-    
-    return allWidgets.filter(widget => {
+
+    // Special case: always include group-members widget for groups
+    const filteredWidgets = allWidgets.filter(widget => {
+      if (widget.id === 'group-members') {
+        return currentGroup !== null && !isSelfView;
+      }
       // Only show widgets from enabled modules
       return isModuleEnabled(currentGroup, widget.moduleId, currentUser);
     });
-  }, [currentGroup, currentUser]);
+
+    return filteredWidgets;
+  }, [currentGroup, currentUser, isSelfView]);
 
   // Get widget configuration from group settings (if stored)
   const widgetConfigs = useMemo(() => {

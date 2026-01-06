@@ -36,7 +36,9 @@ export const analyzeInventoryPhoto = async (imageData: string): Promise<{
   suggestions: string[];
 }> => {
   try {
+    console.log('analyzeInventoryPhoto: Starting analysis, image data length:', imageData.length);
     const genAI = getGenAI();
+    console.log('analyzeInventoryPhoto: Got GenAI instance');
 
     const prompt = `Analyze this kitchen inventory photo and identify all food items visible.
 
@@ -60,7 +62,9 @@ Be specific about quantities and units. Only include items you can clearly ident
 
     // Remove data: URL prefix if present
     const base64Data = imageData.includes(',') ? imageData.split(',')[1] : imageData;
+    console.log('analyzeInventoryPhoto: Base64 data length:', base64Data.length);
 
+    console.log('analyzeInventoryPhoto: Calling Gemini API...');
     const result = await genAI.models.generateContent({
       model: 'gemini-2.0-flash-exp',
       contents: [{
@@ -77,8 +81,10 @@ Be specific about quantities and units. Only include items you can clearly ident
       }],
       config: { responseMimeType: 'application/json' }
     });
+    console.log('analyzeInventoryPhoto: Gemini API call completed');
 
     const text = result.text;
+    console.log('analyzeInventoryPhoto: Raw response:', text);
     if (!text) {
       throw new Error('No response text from AI');
     }
@@ -88,6 +94,7 @@ Be specific about quantities and units. Only include items you can clearly ident
     try {
       parsed = typeof text === 'string' ? JSON.parse(text) : text;
     } catch {
+      console.log('analyzeInventoryPhoto: JSON parse failed, trying regex extraction');
       // Fallback: try to extract JSON from text
       const jsonMatch = text.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
@@ -96,15 +103,19 @@ Be specific about quantities and units. Only include items you can clearly ident
       parsed = JSON.parse(jsonMatch[0]);
     }
 
+    console.log('analyzeInventoryPhoto: Parsed response:', parsed);
+
     // Validate the response structure
     if (!parsed.items || !Array.isArray(parsed.items)) {
       throw new Error('Invalid response structure from AI');
     }
 
-    return {
+    const result_data = {
       items: parsed.items,
       suggestions: parsed.suggestions || []
     };
+    console.log('analyzeInventoryPhoto: Returning result:', result_data);
+    return result_data;
 
   } catch (error) {
     console.error('Error analyzing inventory photo:', error);

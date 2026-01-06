@@ -8,10 +8,12 @@ import '@/app/modules/finance';
 import '@/app/modules/goals';
 import '@/app/modules/chat';
 import '@/app/modules/timetracker';
+import './widgets'; // Import shared widgets
 
 // Export shared utilities
 export { useDashboardWidgets } from './hooks/useDashboardWidgets';
 export { useModuleAccess } from './hooks/useModuleAccess';
+export { BookModal } from './components/BookModal';
 export * from './types/dashboard';
 export * from './registry/widgetRegistry';
 export * from './utils';

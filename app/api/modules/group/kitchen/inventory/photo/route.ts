@@ -4,6 +4,27 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions';
 import { analyzeInventoryPhoto } from '@/app/modules/kitchen/services/kitchen_geminiservice';
 
+// Map Gemini categories to database categories
+function mapGeminiCategoryToDbCategory(geminiCategory: string): string {
+  const categoryMap: Record<string, string> = {
+    'Produce': 'Produce',
+    'Dairy': 'Dairy',
+    'Meat': 'Meat',
+    'Seafood': 'Seafood',
+    'Bakery': 'Bakery',
+    'Pantry': 'Pantry',
+    'Beverages': 'Beverages',
+    'Snacks': 'Snacks',
+    'Frozen': 'Frozen',
+    'Condiments': 'Condiments',
+    'Spices': 'Spices',
+    'Other': 'Other'
+  };
+
+  // Return the mapped category or 'Other' as fallback
+  return categoryMap[geminiCategory] || 'Other';
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -35,11 +56,15 @@ export async function POST(request: NextRequest) {
     let allDetectedItems: any[] = [];
     let allSuggestions: string[] = [];
 
+    console.log('API: Processing', images.length, 'images');
+
     // Process each image
     for (const image of images) {
       try {
+        console.log('API: Analyzing image, size:', image.length);
         // Analyze the photo with AI
         const analysis = await analyzeInventoryPhoto(image);
+        console.log('API: Analysis result:', analysis);
 
         if (analysis.items && analysis.items.length > 0) {
           allDetectedItems.push(...analysis.items);
@@ -64,11 +89,11 @@ export async function POST(request: NextRequest) {
     // Add detected items to inventory
     const itemsToAdd = allDetectedItems.map(item => ({
       name: item.name,
-      category: item.category,
+      category: mapGeminiCategoryToDbCategory(item.category),
       location: 'Counter', // Default location, user can change later
       quantity: item.quantity,
       unit: item.unit,
-      added_by: addedBy || session.user.id,
+      added_by: session.user.id, // Always use authenticated user ID
       group_id: groupId,
     }));
 

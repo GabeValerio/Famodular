@@ -25,6 +25,7 @@ export interface UseInventoryReturn {
 }
 
 export function useInventory(): UseInventoryReturn {
+  console.log('useInventory: Hook initialized');
   const [items, setItems] = useState<KitchenInventoryItem[]>([]);
   const [analysis, setAnalysis] = useState<InventoryAnalysis | null>(null);
   const [loading, setLoading] = useState(false);
