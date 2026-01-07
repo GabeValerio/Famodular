@@ -28,6 +28,7 @@ import {
 import { KitchenInventoryItem, KitchenLocation, KitchenItemCategory, InventoryAnalysis } from '../types';
 import { useInventory } from '../hooks';
 import { PhotoUploadComponent } from './PhotoUploadComponent';
+import { useGroup } from '@/lib/GroupContext';
 import { toLocalDateInputValue } from '@/lib/utils';
 
 interface InventoryComponentProps {
