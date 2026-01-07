@@ -36,3 +36,4 @@ COMMENT ON COLUMN kitchen_inventory.nutritional_info IS 'JSON object with nutrit
 CREATE TRIGGER update_kitchen_inventory_updated_at
     BEFORE UPDATE ON kitchen_inventory
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+

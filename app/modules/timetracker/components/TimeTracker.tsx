@@ -15,6 +15,7 @@ import { Clock, Play, Square, Calendar, Plus, Edit, Trash2, Timer, Upload } from
 import { ImportDialog } from './ImportDialog';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TimeTrackerProject, ManualEntryFormData, ProjectFormData } from '../types';
+import { toLocalDateInputValue, toLocalTimeInputValue } from '@/lib/utils';
 
 interface TimeTrackerProps {
   groupId?: string;
@@ -53,8 +54,8 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
 
   // Form states
   const [manualEntryForm, setManualEntryForm] = useState<ManualEntryFormData>({
-    startDate: new Date().toISOString().split('T')[0],
-    startTime: new Date().toTimeString().slice(0, 5),
+    startDate: toLocalDateInputValue(new Date()),
+    startTime: toLocalTimeInputValue(new Date()),
   });
   const [projectForm, setProjectForm] = useState<ProjectFormData>({
     name: '',
@@ -82,9 +83,10 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
   };
 
   const handleManualAdd = () => {
+    const now = new Date();
     setManualEntryForm({
-      startDate: new Date().toISOString().split('T')[0],
-      startTime: new Date().toTimeString().slice(0, 5),
+      startDate: toLocalDateInputValue(now),
+      startTime: toLocalTimeInputValue(now),
     });
     setShowManualEntryDialog(true);
   };
@@ -134,10 +136,10 @@ export function TimeTracker({ groupId }: TimeTrackerProps) {
 
     setManualEntryForm({
       projectId: entry.projectId,
-      startDate: entry.startTime.toISOString().split('T')[0],
-      startTime: entry.startTime.toTimeString().slice(0, 5),
-      endDate: entry.endTime ? entry.endTime.toISOString().split('T')[0] : undefined,
-      endTime: entry.endTime ? entry.endTime.toTimeString().slice(0, 5) : undefined,
+      startDate: toLocalDateInputValue(entry.startTime),
+      startTime: toLocalTimeInputValue(entry.startTime),
+      endDate: entry.endTime ? toLocalDateInputValue(entry.endTime) : undefined,
+      endTime: entry.endTime ? toLocalTimeInputValue(entry.endTime) : undefined,
       description: entry.description || '',
     });
     setEditingEntry(entryId);

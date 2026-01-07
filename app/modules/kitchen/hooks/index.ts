@@ -7,3 +7,4 @@ export { useMealPlanning } from './useMealPlanning';
 export type { UseKitchenReturn } from './useKitchen';
 export type { UseInventoryReturn } from './useInventory';
 export type { UseMealPlanningReturn } from './useMealPlanning';
+

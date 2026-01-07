@@ -30,3 +30,4 @@ async function checkProjectsSchema(): Promise<void> {
 
 checkProjectsSchema();
 
+

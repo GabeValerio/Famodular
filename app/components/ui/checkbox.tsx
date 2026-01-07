@@ -28,3 +28,4 @@ const Checkbox = React.forwardRef<
 Checkbox.displayName = CheckboxPrimitives.Root.displayName
 
 export { Checkbox }
+

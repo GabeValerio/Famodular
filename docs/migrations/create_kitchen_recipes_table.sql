@@ -54,3 +54,4 @@ COMMENT ON COLUMN kitchen_recipes.is_public IS 'Whether this recipe can be viewe
 CREATE TRIGGER update_kitchen_recipes_updated_at
     BEFORE UPDATE ON kitchen_recipes
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+

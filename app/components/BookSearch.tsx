@@ -193,3 +193,4 @@ export function BookSearch({ onBookSelect, selectedBook, onClearSelection }: Boo
     </div>
   );
 }
+

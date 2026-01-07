@@ -42,3 +42,4 @@ ALTER TABLE kitchen_grocery_items
 ADD CONSTRAINT kitchen_grocery_items_added_by_fkey
 FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE CASCADE;
 
+

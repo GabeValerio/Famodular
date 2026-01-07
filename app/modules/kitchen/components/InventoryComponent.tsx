@@ -28,7 +28,7 @@ import {
 import { KitchenInventoryItem, KitchenLocation, KitchenItemCategory, InventoryAnalysis } from '../types';
 import { useInventory } from '../hooks';
 import { PhotoUploadComponent } from './PhotoUploadComponent';
-import { useGroup } from '@/lib/GroupContext';
+import { toLocalDateInputValue } from '@/lib/utils';
 
 interface InventoryComponentProps {
   groupId: string;
@@ -193,7 +193,9 @@ export function InventoryComponent({ groupId }: InventoryComponentProps) {
       location: item.location,
       quantity: item.quantity,
       unit: item.unit,
-      expirationDate: item.expirationDate || '',
+      expirationDate: item.expirationDate 
+        ? toLocalDateInputValue(new Date(item.expirationDate)) 
+        : '',
     });
     setIsAddDialogOpen(true);
   };

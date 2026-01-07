@@ -69,3 +69,4 @@ CREATE TRIGGER update_kitchen_meal_plans_updated_at
 CREATE TRIGGER update_kitchen_meals_updated_at
     BEFORE UPDATE ON kitchen_meals
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+

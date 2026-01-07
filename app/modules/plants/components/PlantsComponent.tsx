@@ -20,6 +20,7 @@ import { Input } from '@/app/components/ui/input';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Card } from '@/app/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/app/components/ui/dialog';
+import { toLocalDateInputValue } from '@/lib/utils';
 
 const compressImage = async (file: File): Promise<File> => {
   return new Promise((resolve, reject) => {
@@ -124,7 +125,7 @@ export function PlantsComponent({
         recommendedWaterSchedule: plant.recommendedWaterSchedule || '',
         waterAmount: plant.waterAmount || '',
         lastWatered: plant.lastWatered 
-          ? new Date(plant.lastWatered).toISOString().split('T')[0]
+          ? toLocalDateInputValue(new Date(plant.lastWatered))
           : '',
       });
     } else {

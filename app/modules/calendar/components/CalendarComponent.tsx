@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CalendarEvent, FamilyMember, EventCategory } from '@/types/family';
 import { ChevronLeft, ChevronRight, Plus, Sparkles, X, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { suggestActivity } from '@/lib/services/geminiService';
+import { toLocalDateInputValue, toLocalTimeInputValue } from '@/lib/utils';
 
 interface CalendarComponentProps {
   events: CalendarEvent[];
@@ -26,8 +27,8 @@ export const CalendarComponent: React.FC<CalendarComponentProps> = ({ events, me
 
   // Form State
   const [newTitle, setNewTitle] = useState('');
-  const [newDate, setNewDate] = useState(new Date().toISOString().split('T')[0]);
-  const [newTime, setNewTime] = useState(new Date().toTimeString().slice(0, 5)); // HH:mm format
+  const [newDate, setNewDate] = useState(toLocalDateInputValue(new Date()));
+  const [newTime, setNewTime] = useState(toLocalTimeInputValue(new Date())); // HH:mm format
   const [newCategory, setNewCategory] = useState<EventCategory>(EventCategory.FAMILY);
   const [newDescription, setNewDescription] = useState('');
 
@@ -71,8 +72,8 @@ export const CalendarComponent: React.FC<CalendarComponentProps> = ({ events, me
 
   const resetForm = () => {
     setNewTitle('');
-    setNewDate(new Date().toISOString().split('T')[0]);
-    setNewTime(new Date().toTimeString().slice(0, 5));
+    setNewDate(toLocalDateInputValue(new Date()));
+    setNewTime(toLocalTimeInputValue(new Date()));
     setNewCategory(EventCategory.FAMILY);
     setNewDescription('');
   };

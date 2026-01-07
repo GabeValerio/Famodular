@@ -49,3 +49,4 @@ COMMENT ON COLUMN groups.enabled_modules IS 'Module configuration for groups. De
 
 
 
+

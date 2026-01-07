@@ -265,3 +265,4 @@ export function KitchenPage({ groupId }: KitchenPageProps) {
     </div>
   );
 }
+

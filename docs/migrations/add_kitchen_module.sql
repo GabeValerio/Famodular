@@ -7,3 +7,4 @@ INSERT INTO modules (id, name, description, icon, category, default_enabled, rou
 
 -- Update comment to reflect new module
 COMMENT ON TABLE modules IS 'Available modules that can be enabled for groups and users - includes Kitchen module for AI-powered meal planning and inventory management';
+

@@ -55,3 +55,4 @@ CREATE TRIGGER update_kitchen_grocery_lists_updated_at
 CREATE TRIGGER update_kitchen_grocery_items_updated_at
     BEFORE UPDATE ON kitchen_grocery_items
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
